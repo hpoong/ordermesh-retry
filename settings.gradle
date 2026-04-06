@@ -1,4 +1,5 @@
 rootProject.name = 'ordermesh-retry'
 include(
         "core-service",
+        "order-service",
 )
