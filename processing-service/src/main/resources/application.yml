@@ -6,4 +6,4 @@ logging:
 
 
 server:
-  port: 9600
+  port: 9200
