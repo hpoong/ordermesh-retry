@@ -1,0 +1,9 @@
+
+logging:
+  config: classpath:logback/logback-spring.xml
+  level:
+    root: info
+
+
+server:
+  port: 9600

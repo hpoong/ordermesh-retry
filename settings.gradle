@@ -3,4 +3,5 @@ include(
         "core-service",
         "order-service",
         "processing-service",
+        "recovery-service",
 )
