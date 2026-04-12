@@ -21,6 +21,9 @@ dependencies {
 
 	// springframework
 	implementation 'org.springframework.boot:spring-boot-starter-web'		// web
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	runtimeOnly 'org.postgresql:postgresql'
 
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
