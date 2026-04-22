@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,45 +23,35 @@ import org.hibernate.annotations.UpdateTimestamp;
 @AllArgsConstructor
 @Entity
 @Table(
-        name = "users",
+        name = "products",
         indexes = {
-                @Index(name = "idx_users_status", columnList = "status"),
-                @Index(name = "idx_users_name", columnList = "name")
+                @Index(name = "idx_products_status", columnList = "status"),
+                @Index(name = "idx_products_name", columnList = "product_name")
         },
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_users_login_id", columnNames = "login_id"),
-                @UniqueConstraint(name = "uk_users_email", columnNames = "email")
+                @UniqueConstraint(name = "uk_products_code", columnNames = "product_code")
         }
 )
-public class User {
+public class ProductEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "login_id", nullable = false, length = 50)
-    private String loginId;
+    @Column(name = "product_name", nullable = false, length = 150)
+    private String productName;
 
-    @Column(nullable = false, length = 100)
-    private String name;
+    @Column(name = "product_code", nullable = false, length = 50)
+    private String productCode;
 
-    @Column(nullable = false, length = 255)
-    private String email;
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal price;
 
-    @Column(length = 30)
-    private String phone;
+    @Column(name = "stock_quantity", nullable = false)
+    private Integer stockQuantity;
 
     @Column(nullable = false, length = 20)
     private String status;
-
-    @Column(name = "point_balance", nullable = false)
-    private Integer pointBalance;
-
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
-
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -69,4 +60,12 @@ public class User {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void updateInfo(String productName, String productCode, BigDecimal price, Integer stockQuantity, String status) {
+        this.productName = productName;
+        this.productCode = productCode;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.status = status;
+    }
 }
