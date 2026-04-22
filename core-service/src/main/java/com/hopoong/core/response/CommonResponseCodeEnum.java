@@ -7,8 +7,18 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum CommonResponseCodeEnum {
 
-    INVALID_REQUEST("T8", "C01"), // T8 : Request
-    SERVER("T9", "C01"), // T9 : SERVER
+    // T9 : SERVER
+    SERVER("T9", "common"),
+
+    // T8 : Request
+    INVALID_REQUEST("T8", "common"),
+
+    // T1 : core-service
+    CORE_USERS("T1", "C01"),
+    CORE_PRODUCTS("T1", "C02"),
+
+    // T2: order-service
+
     ;
 
     private final String type;
