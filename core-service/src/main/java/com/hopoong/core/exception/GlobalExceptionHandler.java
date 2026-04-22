@@ -21,6 +21,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(CoreException.class)
+    public ResponseEntity<ErrorResponse> handleCoreException(CoreException ex) {
+        log.warn("CoreException: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(ex.getHttpStatus())
+                .body(new ErrorResponse(ex.getResponseCode(), ex.getResponseMessage()));
+    }
+
 
     @ExceptionHandler({
             MethodArgumentNotValidException.class,
