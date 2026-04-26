@@ -41,3 +41,5 @@ logs/
 __pycache__/
 
 .env
+
+*-data/
