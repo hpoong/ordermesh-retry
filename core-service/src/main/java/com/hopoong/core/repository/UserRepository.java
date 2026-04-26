@@ -5,7 +5,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
-    boolean existsByLoginIdAndIdNot(String loginId, Long id);
+    boolean existsByLoginIdAndDeletedAtIsNull(String loginId);
 
-    boolean existsByEmailAndIdNot(String email, Long id);
+    boolean existsByEmailAndDeletedAtIsNull(String email);
+
+    boolean existsByLoginIdAndIdNotAndDeletedAtIsNull(String loginId, Long id);
+
+    boolean existsByEmailAndIdNotAndDeletedAtIsNull(String email, Long id);
 }

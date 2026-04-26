@@ -1,5 +1,6 @@
 package com.hopoong.core.api.user.controller;
 
+import com.hopoong.core.api.user.dto.UserCreateRequest;
 import com.hopoong.core.api.user.dto.UserUpdateRequest;
 import com.hopoong.core.response.CommonResponseCodeEnum;
 import com.hopoong.core.response.SuccessResponse;
@@ -8,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,6 +26,11 @@ public class UserController {
     @GetMapping("/{userId}")
     public SuccessResponse getUser(@PathVariable Long userId) {
         return new SuccessResponse(RESPONSE_CODE, userService.getUser(userId));
+    }
+
+    @PostMapping
+    public SuccessResponse createUser(@Valid @RequestBody UserCreateRequest request) {
+        return new SuccessResponse(RESPONSE_CODE, userService.createUser(request));
     }
 
     @PutMapping("/{userId}")

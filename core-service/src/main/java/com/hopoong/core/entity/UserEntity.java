@@ -70,8 +70,7 @@ public class UserEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public void updateProfile(String loginId, String name, String email, String phone, String status) {
-        this.loginId = loginId;
+    public void updateProfile(String name, String email, String phone, String status) {
         this.name = name;
         this.email = email;
         this.phone = phone;
