@@ -21,4 +21,14 @@ public record UserCreateRequest(
         @Size(max = 30, message = "phone은 30자 이하여야 합니다.")
         String phone
 ) {
+    public UserCreateRequest {
+        loginId = trimOrNull(loginId);
+        name = trimOrNull(name);
+        email = trimOrNull(email);
+        phone = trimOrNull(phone);
+    }
+
+    private static String trimOrNull(String value) {
+        return value == null ? null : value.trim();
+    }
 }
