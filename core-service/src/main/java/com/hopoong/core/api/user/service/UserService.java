@@ -6,6 +6,7 @@ import com.hopoong.core.api.user.dto.UserUpdateRequest;
 import com.hopoong.core.entity.UserEntity;
 import com.hopoong.core.exception.CoreException;
 import com.hopoong.core.repository.UserRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,14 @@ public class UserService {
     public UserResponse getUser(Long userId) {
         UserEntity userEntity = getUserOrThrow(userId);
         return UserResponse.from(userEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserResponse> getUsers(String status, String name, String sortBy, String sortDirection) {
+        return userRepository.findUsers(status, name, sortBy, sortDirection)
+                .stream()
+                .map(UserResponse::from)
+                .toList();
     }
 
     @Transactional

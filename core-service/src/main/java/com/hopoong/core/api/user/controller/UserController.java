@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,6 +27,16 @@ public class UserController {
     @GetMapping("/{userId}")
     public SuccessResponse getUser(@PathVariable Long userId) {
         return new SuccessResponse(RESPONSE_CODE, userService.getUser(userId));
+    }
+
+    @GetMapping
+    public SuccessResponse getUsers(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection
+    ) {
+        return new SuccessResponse(RESPONSE_CODE, userService.getUsers(status, name, sortBy, sortDirection));
     }
 
     @PostMapping
