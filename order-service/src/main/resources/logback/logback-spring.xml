@@ -1,16 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
 
 <configuration>
-    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+
+    <!-- Spring Boot 색상 로그 지원 -->
+    <conversionRule conversionWord="clr"
+                    converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
 
 
+    <!-- 로그 패턴 -->
+    <property name="LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{request_id:-startup}] [%thread] %-5level %logger - %msg%n"/>
+
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%red(%d{yyyy-MM-dd HH:mm:ss.SSS}) [%X{request_id:-startup}] [%thread] %clr(%5level) %cyan(%logger) - %msg%n"/>
+
+
+
+    <!-- 공통 설정 -->
+    <property name="APP_NAME" value="order_service"/>
+
+    <!-- 환경별 경로/레벨 -->
+    <springProfile name="prod">
+        <property name="LOG_DIR_BASE" value="/var/log/ordermesh-retry/order"/>
+        <property name="APP_LOG_LEVEL" value="INFO"/>
+    </springProfile>
+
+    <springProfile name="dev">
+        <property name="LOG_DIR_BASE" value="/var/log/ordermesh-retry/order"/>
+        <property name="APP_LOG_LEVEL" value="INFO"/>
+    </springProfile>
+
+
+
+    <!-- Console Appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern> %red(%d{yyyy-MM-dd HH:mm:ss.SSS}) [%X{request_id:-startup}] [%thread] %clr(%5level) %cyan(%logger) - %msg%n</pattern>
+            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="CONSOLE" />
-    </root>
+    <!-- 일반 파일 로그 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR_BASE}/${APP_NAME}.log</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 일 단위 롤링 -->
+            <fileNamePattern>${LOG_DIR_BASE}/${APP_NAME}-%d{yyyyMMdd}.log</fileNamePattern>
+
+            <!-- 3일 보관 -->
+            <maxHistory>3</maxHistory>
+
+            <!-- 애플리케이션 시작 시 오래된 로그 정리 -->
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ERROR 전용 파일 로그 -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR_BASE}/${APP_NAME}-error.log</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+
+        <!-- ERROR 이상만 기록 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 일 단위 롤링 -->
+            <fileNamePattern>${LOG_DIR_BASE}/${APP_NAME}-error-%d{yyyyMMdd}.log</fileNamePattern>
+
+            <!-- 30일 보관 -->
+            <maxHistory>30</maxHistory>
+
+            <!-- 애플리케이션 시작 시 오래된 로그 정리 -->
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+    </appender>
+
+
+
+
+
+
+    <!-- local 환경 -->
+    <springProfile name="!dev &amp; !prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+
+    <!-- dev, prod 환경 -->
+    <springProfile name="dev | prod">
+        <root level="${APP_LOG_LEVEL}">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="ERROR_FILE"/>
+        </root>
+    </springProfile>
 
 </configuration>
