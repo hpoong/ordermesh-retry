@@ -3,6 +3,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/ordermesh-retry
     username: user
     password: password
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
 
 logging:
   config: classpath:logback/logback-spring.xml
