@@ -30,6 +30,9 @@ dependencies {
 
 	runtimeOnly 'org.postgresql:postgresql'
 
+	// sql logging
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0'
+
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
