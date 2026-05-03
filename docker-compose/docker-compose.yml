@@ -27,6 +27,16 @@ services:
     networks:
       - ordermesh-retry-network
 
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
+    command: [ "redis-server", "--appendonly", "yes" ]
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - ordermesh-retry-network
+
 networks:
   ordermesh-retry-network:
     driver: bridge
