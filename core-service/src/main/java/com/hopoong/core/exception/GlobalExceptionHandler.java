@@ -2,6 +2,7 @@ package com.hopoong.core.exception;
 
 import com.hopoong.core.response.CommonResponseCodeEnum;
 import com.hopoong.core.response.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -80,8 +81,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
-        logErrorWithOptionalStackTrace("GlobalException: {}", ex.getMessage(), ex);
+    public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
+        log.error(
+                "[ERROR] method={}, uri={}, query={}, clientIp={}, exception={}, message={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getQueryString() == null ? "" : request.getQueryString(),
+                getClientIp(request),
+                ex.getClass().getSimpleName(),
+                ex.getMessage(),
+                ex
+        );
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(CommonResponseCodeEnum.SERVER, "알수없는 에러가 발생하였습니다."));
     }
@@ -94,11 +104,17 @@ public class GlobalExceptionHandler {
         log.warn(format, message);
     }
 
-    private void logErrorWithOptionalStackTrace(String format, String message, Exception ex) {
-        if (stacktraceEnabled) {
-            log.error(format, message, ex);
-            return;
+    private String getClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
         }
-        log.error(format, message);
+
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isBlank()) {
+            return xRealIp;
+        }
+
+        return request.getRemoteAddr();
     }
 }
