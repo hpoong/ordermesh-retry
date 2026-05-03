@@ -4,8 +4,10 @@ import com.hopoong.core.api.user.dto.UserCreateRequest;
 import com.hopoong.core.api.user.dto.UserResponse;
 import com.hopoong.core.api.user.dto.UserUpdateRequest;
 import com.hopoong.core.entity.UserEntity;
+import com.hopoong.core.enums.UserStatus;
 import com.hopoong.core.exception.CoreException;
 import com.hopoong.core.repository.UserRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +29,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public List<UserResponse> getUsers(String status, String name, String sortBy, String sortDirection) {
-        return userRepository.findUsers(status, name, sortBy, sortDirection)
+        return userRepository.findUsers(parseUserStatus(status), name, sortBy, sortDirection)
                 .stream()
                 .map(UserResponse::from)
                 .toList();
@@ -42,7 +44,7 @@ public class UserService {
                 .name(request.name())
                 .email(request.email())
                 .phone(request.phone())
-                .status("ACTIVE")
+                .status(UserStatus.ACTIVE)
                 .pointBalance(0)
                 .build();
 
@@ -52,16 +54,35 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         UserEntity userEntity = getUserOrThrow(userId);
-        validateDuplicateForActiveUser(request.loginId(), request.email(), userId);
 
         userEntity.updateProfile(
                 request.name(),
                 request.email(),
-                request.phone(),
-                request.status()
+                request.phone()
         );
 
         return UserResponse.from(userEntity);
+    }
+
+    @Transactional
+    public void softDeleteUser(Long userId) {
+        UserEntity userEntity = getUserOrThrow(userId);
+
+        if (userEntity.getDeletedAt() != null) {
+            return;
+        }
+        userEntity.softDelete(LocalDateTime.now());
+    }
+
+    private UserStatus parseUserStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return UserStatus.from(status.trim());
+        } catch (IllegalArgumentException exception) {
+            throw CoreException.badRequest(CORE_USERS, "유효하지 않은 status 입니다. (ACTIVE, INACTIVE, SUSPENDED)");
+        }
     }
 
     private UserEntity getUserOrThrow(Long userId) {

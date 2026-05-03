@@ -7,6 +7,7 @@ import com.hopoong.core.response.SuccessResponse;
 import com.hopoong.core.api.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,5 +48,11 @@ public class UserController {
     @PutMapping("/{userId}")
     public SuccessResponse updateUser(@PathVariable Long userId, @Valid @RequestBody UserUpdateRequest request) {
         return new SuccessResponse(RESPONSE_CODE, userService.updateUser(userId, request));
+    }
+
+    @DeleteMapping("/{userId}")
+    public SuccessResponse softDeleteUser(@PathVariable Long userId) {
+        userService.softDeleteUser(userId);
+        return new SuccessResponse(RESPONSE_CODE, null);
     }
 }

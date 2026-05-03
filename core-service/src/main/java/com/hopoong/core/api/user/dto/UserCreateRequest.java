@@ -1,5 +1,6 @@
 package com.hopoong.core.api.user.dto;
 
+import com.hopoong.core.util.StringUtil;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -22,13 +23,9 @@ public record UserCreateRequest(
         String phone
 ) {
     public UserCreateRequest {
-        loginId = trimOrNull(loginId);
-        name = trimOrNull(name);
-        email = trimOrNull(email);
-        phone = trimOrNull(phone);
-    }
-
-    private static String trimOrNull(String value) {
-        return value == null ? null : value.trim();
+        loginId = StringUtil.trimOrNull(loginId);
+        name = StringUtil.trimOrNull(name);
+        email = StringUtil.trimOrNull(email);
+        phone = StringUtil.trimOrNull(phone);
     }
 }

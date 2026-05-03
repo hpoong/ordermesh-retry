@@ -2,6 +2,7 @@ package com.hopoong.core.repository;
 
 import com.hopoong.core.entity.QUserEntity;
 import com.hopoong.core.entity.UserEntity;
+import com.hopoong.core.enums.UserStatus;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Predicate;
@@ -15,7 +16,7 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<UserEntity> findUsers(String status, String name, String sortBy, String sortDirection) {
+    public List<UserEntity> findUsers(UserStatus status, String name, String sortBy, String sortDirection) {
         QUserEntity userEntity = QUserEntity.userEntity;
 
         return queryFactory
@@ -29,11 +30,11 @@ public class UserQueryDslRepositoryImpl implements UserQueryDslRepository {
                 .fetch();
     }
 
-    private static Predicate statusEq(String status, QUserEntity user) {
-        if (status == null || status.isBlank()) {
+    private static Predicate statusEq(UserStatus status, QUserEntity user) {
+        if (status == null) {
             return null;
         }
-        return user.status.eq(status.trim());
+        return user.status.eq(UserStatus.valueOf(status.name()));
     }
 
     private static Predicate nameContainsIgnoreCase(String name, QUserEntity user) {

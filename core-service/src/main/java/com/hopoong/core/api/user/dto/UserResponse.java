@@ -1,6 +1,7 @@
 package com.hopoong.core.api.user.dto;
 
 import com.hopoong.core.entity.UserEntity;
+import com.hopoong.core.enums.UserStatus;
 import java.time.LocalDateTime;
 
 public record UserResponse(
@@ -9,7 +10,8 @@ public record UserResponse(
         String name,
         String email,
         String phone,
-        String status,
+        UserStatus status,
+        String statusKorean,
         Integer pointBalance,
         LocalDateTime lastLoginAt,
         LocalDateTime createdAt,
@@ -23,6 +25,7 @@ public record UserResponse(
                 userEntity.getEmail(),
                 userEntity.getPhone(),
                 userEntity.getStatus(),
+                userEntity.getStatus().getKoreanName(),
                 userEntity.getPointBalance(),
                 userEntity.getLastLoginAt(),
                 userEntity.getCreatedAt(),

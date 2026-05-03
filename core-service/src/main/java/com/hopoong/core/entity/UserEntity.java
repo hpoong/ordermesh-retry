@@ -1,13 +1,15 @@
 package com.hopoong.core.entity;
 
+import com.hopoong.core.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,10 +28,6 @@ import org.hibernate.annotations.UpdateTimestamp;
         indexes = {
                 @Index(name = "idx_users_status", columnList = "status"),
                 @Index(name = "idx_users_name", columnList = "name")
-        },
-        uniqueConstraints = {
-                @UniqueConstraint(name = "uk_users_login_id", columnNames = "login_id"),
-                @UniqueConstraint(name = "uk_users_email", columnNames = "email")
         }
 )
 public class UserEntity {
@@ -51,7 +49,8 @@ public class UserEntity {
     private String phone;
 
     @Column(nullable = false, length = 20)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     @Column(name = "point_balance", nullable = false)
     private Integer pointBalance;
@@ -70,10 +69,13 @@ public class UserEntity {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public void updateProfile(String name, String email, String phone, String status) {
+    public void updateProfile(String name, String email, String phone) {
         this.name = name;
         this.email = email;
         this.phone = phone;
-        this.status = status;
+    }
+
+    public void softDelete(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
     }
 }
