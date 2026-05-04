@@ -1,6 +1,7 @@
 package com.hopoong.core.api.user.service;
 
 import com.hopoong.core.api.user.dto.UserCreateRequest;
+import com.hopoong.core.api.user.dto.UserDetailCacheEvictEvent;
 import com.hopoong.core.api.user.dto.UserResponse;
 import com.hopoong.core.api.user.dto.UserUpdateRequest;
 import com.hopoong.core.entity.UserEntity;
@@ -10,6 +11,7 @@ import com.hopoong.core.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,13 +22,24 @@ import static com.hopoong.core.response.CommonResponseCodeEnum.CORE_USERS;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserRedisCacheService userRedisCacheService;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
+    // 사용자 조회
     @Transactional(readOnly = true)
     public UserResponse getUser(Long userId) {
-        UserEntity userEntity = getUserOrThrow(userId);
-        return UserResponse.from(userEntity);
+        return userRedisCacheService.getUserDetail(userId)
+                .orElseGet(() -> getUserDetailFromDbAndCache(userId));
     }
 
+    private UserResponse getUserDetailFromDbAndCache(Long userId) {
+        UserEntity userEntity = getUserOrThrow(userId);
+        UserResponse response = UserResponse.from(userEntity);
+        userRedisCacheService.putUserDetail(userId, response);
+        return response;
+    }
+
+    // 사용자 필터 조회
     @Transactional(readOnly = true)
     public List<UserResponse> getUsers(String status, String name, String sortBy, String sortDirection) {
         return userRepository.findUsers(parseUserStatus(status), name, sortBy, sortDirection)
@@ -35,6 +48,7 @@ public class UserService {
                 .toList();
     }
 
+    // 사용자 생성
     @Transactional
     public UserResponse createUser(UserCreateRequest request) {
         validateDuplicateForActiveUser(request.loginId(), request.email(), null);
@@ -51,6 +65,7 @@ public class UserService {
         return UserResponse.from(userRepository.save(userEntity));
     }
 
+    // 사용자 업데이트
     @Transactional
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         UserEntity userEntity = getUserOrThrow(userId);
@@ -61,17 +76,22 @@ public class UserService {
                 request.phone()
         );
 
-        return UserResponse.from(userEntity);
+        UserResponse response = UserResponse.from(userEntity);
+        applicationEventPublisher.publishEvent(new UserDetailCacheEvictEvent(userId));
+        return response;
     }
 
+    // 사용자 삭제
     @Transactional
     public void softDeleteUser(Long userId) {
         UserEntity userEntity = getUserOrThrow(userId);
 
         if (userEntity.getDeletedAt() != null) {
+            applicationEventPublisher.publishEvent(new UserDetailCacheEvictEvent(userId));
             return;
         }
         userEntity.softDelete(LocalDateTime.now());
+        applicationEventPublisher.publishEvent(new UserDetailCacheEvictEvent(userId));
     }
 
     private UserStatus parseUserStatus(String status) {
