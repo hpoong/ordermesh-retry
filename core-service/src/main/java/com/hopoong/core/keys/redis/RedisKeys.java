@@ -6,7 +6,7 @@ public final class RedisKeys {
 
     // 사용자 상세 정보
     public static final class UserDetail {
-        public static final String PREFIX = "user:detail:v1:";
+        private static final String PREFIX = "user:detail:v1:";
         
         public static String key(Long userId) {
             return PREFIX + userId;
