@@ -26,7 +26,7 @@ public class UserRedisCacheService {
 
     // get value
     public Optional<UserResponse> getUserDetail(Long userId) {
-        String key = RedisKeys.userDetail(userId);
+        String key = RedisKeys.UserDetail.key(userId);
 
         try {
             byte[] rawValue = redisTemplate.execute((RedisCallback<byte[]>) connection ->
@@ -46,7 +46,7 @@ public class UserRedisCacheService {
 
     // set value
     public void putUserDetail(Long userId, UserResponse response) {
-        String key = RedisKeys.userDetail(userId);
+        String key = RedisKeys.UserDetail.key(userId);
 
         try {
             String jsonValue = objectMapper.writeValueAsString(response);
@@ -63,7 +63,7 @@ public class UserRedisCacheService {
 
     // delete value
     public void evictUserDetail(Long userId) {
-        String key = RedisKeys.userDetail(userId);
+        String key = RedisKeys.UserDetail.key(userId);
 
         try {
             redisTemplate.delete(key);

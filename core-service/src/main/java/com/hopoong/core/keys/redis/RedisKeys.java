@@ -2,11 +2,16 @@ package com.hopoong.core.keys.redis;
 
 public final class RedisKeys {
 
-    private static final String CORE_USER_DETAIL_PREFIX = "core:user:detail:v1:v1:";
-
     private RedisKeys() { }
 
-    public static String userDetail(Long userId) {
-        return CORE_USER_DETAIL_PREFIX + userId;
+    // 사용자 상세 정보
+    public static final class UserDetail {
+        public static final String PREFIX = "user:detail:v1:";
+        
+        public static String key(Long userId) {
+            return PREFIX + userId;
+        }
+
+        private UserDetail() { }
     }
 }
