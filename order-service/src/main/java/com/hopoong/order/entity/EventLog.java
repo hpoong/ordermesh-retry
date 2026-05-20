@@ -18,7 +18,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Builder
@@ -69,6 +71,7 @@ public class EventLog {
     private String exchangeName;
 
     @Comment("발행할 이벤트 본문 데이터")
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, columnDefinition = "jsonb")
     private String payload;
 
@@ -114,4 +117,38 @@ public class EventLog {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    // [발행 시도 시작: RETRYING 전환, 시도 횟수·마지막 시도 시각 갱신]
+    public void markPublishAttemptStarted(LocalDateTime attemptedAt) {
+        this.publishStatus = EventPublishStatus.RETRYING;
+        this.publishAttemptCount = this.publishAttemptCount + 1;
+        this.lastAttemptedAt = attemptedAt;
+    }
+
+    // [발행 성공: PUBLISHED 반영, 실패·재시도 정보 초기화]
+    public void markPublished(LocalDateTime publishedAt) {
+        this.publishStatus = EventPublishStatus.PUBLISHED;
+        this.lastPublishedAt = publishedAt;
+        if (this.publishedAt == null) {
+            this.publishedAt = publishedAt;
+        }
+        this.failureReason = null;
+        this.nextRetryAt = null;
+    }
+
+    // [발행 실패 후 재시도 예약: nextRetryAt·실패 사유 저장]
+    public void markRetryScheduled(LocalDateTime nextRetryAt, String failureReason, LocalDateTime attemptedAt) {
+        this.publishStatus = EventPublishStatus.RETRYING;
+        this.nextRetryAt = nextRetryAt;
+        this.failureReason = failureReason;
+        this.lastAttemptedAt = attemptedAt;
+    }
+
+    // [발행 최종 실패: FAILED 반영, 재시도 예약 해제]
+    public void markFailed(String failureReason, LocalDateTime attemptedAt) {
+        this.publishStatus = EventPublishStatus.FAILED;
+        this.failureReason = failureReason;
+        this.lastAttemptedAt = attemptedAt;
+        this.nextRetryAt = null;
+    }
 }
