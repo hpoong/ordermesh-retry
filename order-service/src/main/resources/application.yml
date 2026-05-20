@@ -1,4 +1,10 @@
 spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password
+    virtual-host: ordermesh-retry
   data:
     redis:
       host: localhost
@@ -16,6 +22,14 @@ logging:
   level:
     root: info
 
+app:
+  event-outbox:
+    publish:
+      enabled: true
+      batch-size: 20
+      max-attempts: 10
+      retry-delay-seconds: 30
+      fixed-delay-ms: 30000 # 30초
 
 server:
   port: 9100
