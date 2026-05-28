@@ -1,0 +1,4 @@
+app:
+  log:
+    stacktrace: true
+
