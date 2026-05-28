@@ -29,7 +29,7 @@ app:
       batch-size: 20
       max-attempts: 10
       retry-delay-seconds: 30
-      fixed-delay-ms: 30000 # 30초
+      fixed-delay-ms: 60000 # 1분
 
 server:
   port: 9100

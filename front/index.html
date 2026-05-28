@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UserPointChanged Outbox Recorder</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      max-width: 760px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    p {
+      color: #444;
+      margin-top: 0;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 10px 12px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      height: 34px;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    button {
+      height: 36px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      background: #1677ff;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button.secondary {
+      background: #666;
+    }
+
+    .status {
+      font-size: 14px;
+      color: #333;
+    }
+
+    pre {
+      margin-top: 16px;
+      background: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120px;
+    }
+  </style>
+</head>
+<body>
+  <h1>UserPointChanged Outbox Record</h1>
+  <p>`UserPointChangedOutboxService.record()` 호출용 테스트 화면</p>
+
+  <div class="form-grid">
+    <label for="baseUrl">Order API Base URL</label>
+    <input id="baseUrl" type="text" value="http://localhost:9100" />
+
+    <label for="userId">userId</label>
+    <input id="userId" type="number" value="1" />
+
+    <label for="changeAmount">changeAmount</label>
+    <input id="changeAmount" type="number" step="0.01" value="100.00" />
+
+    <label for="balanceAfter">balanceAfter</label>
+    <input id="balanceAfter" type="number" step="0.01" value="1000.00" />
+
+    <label for="occurredAt">occurredAt</label>
+    <input id="occurredAt" type="datetime-local" />
+  </div>
+
+  <div class="actions">
+    <button id="sendButton">record 실행</button>
+    <button id="nowButton" class="secondary">현재 시각 입력</button>
+    <span id="status" class="status"></span>
+  </div>
+
+  <pre id="result"></pre>
+
+  <script>
+    const baseUrlInput = document.getElementById("baseUrl");
+    const userIdInput = document.getElementById("userId");
+    const changeAmountInput = document.getElementById("changeAmount");
+    const balanceAfterInput = document.getElementById("balanceAfter");
+    const occurredAtInput = document.getElementById("occurredAt");
+    const sendButton = document.getElementById("sendButton");
+    const nowButton = document.getElementById("nowButton");
+    const status = document.getElementById("status");
+    const result = document.getElementById("result");
+
+    function setNow() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset();
+      const local = new Date(now.getTime() - offset * 60 * 1000)
+        .toISOString()
+        .slice(0, 16);
+      occurredAtInput.value = local;
+    }
+
+    function toIsoDateTime(localDateTime) {
+      if (!localDateTime) {
+        return null;
+      }
+      return new Date(localDateTime).toISOString();
+    }
+
+    function pretty(value) {
+      return JSON.stringify(value, null, 2);
+    }
+
+    async function send() {
+      status.textContent = "요청 중...";
+      result.textContent = "";
+
+      const payload = {
+        userId: Number(userIdInput.value),
+        changeAmount: Number(changeAmountInput.value),
+        balanceAfter: Number(balanceAfterInput.value),
+        occurredAt: toIsoDateTime(occurredAtInput.value)
+      };
+
+      try {
+        const response = await fetch(
+          `${baseUrlInput.value.replace(/\/$/, "")}/api/outbox/user-point-changed`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          }
+        );
+
+        const text = await response.text();
+        let body = text;
+        try {
+          body = JSON.parse(text);
+        } catch (_) {
+          // Keep plain text response if not JSON.
+        }
+
+        if (!response.ok) {
+          status.textContent = `실패 (${response.status})`;
+          result.textContent = pretty({
+            request: payload,
+            status: response.status,
+            response: body
+          });
+          return;
+        }
+
+        status.textContent = `성공 (${response.status})`;
+        result.textContent = pretty({
+          request: payload,
+          response: body
+        });
+      } catch (error) {
+        status.textContent = "요청 오류";
+        result.textContent = pretty({
+          request: payload,
+          error: error.message
+        });
+      }
+    }
+
+    nowButton.addEventListener("click", setNow);
+    sendButton.addEventListener("click", send);
+
+    setNow();
+    result.textContent = "record 실행 결과가 여기에 표시됩니다.";
+  </script>
+</body>
+</html>
