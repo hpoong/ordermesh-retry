@@ -1,7 +1,11 @@
 package com.hopoong.core.config;
 
 import com.hopoong.core.keys.rabbitmq.RabbitMqKeys;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
@@ -18,6 +22,18 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public Queue userPointChangedQueue() {
+        return new Queue(RabbitMqKeys.UserPointChanged.QUEUE, true);
+    }
+
+    @Bean
+    public Binding userPointChangedBinding(Queue userPointChangedQueue, TopicExchange userPointChangedExchange) {
+        return BindingBuilder.bind(userPointChangedQueue)
+                .to(userPointChangedExchange)
+                .with(RabbitMqKeys.UserPointChanged.ROUTING_KEY);
+    }
+
+    @Bean
     public MessageConverter rabbitMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
@@ -27,5 +43,14 @@ public class RabbitMqConfig {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(rabbitMessageConverter);
         return rabbitTemplate;
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory, MessageConverter rabbitMessageConverter) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setMessageConverter(rabbitMessageConverter);
+
+        return factory;
     }
 }
