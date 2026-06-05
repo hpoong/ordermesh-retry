@@ -9,7 +9,6 @@ import com.hopoong.core.keys.rabbitmq.RabbitMqKeys;
 import com.hopoong.order.entity.EventLog;
 import com.hopoong.order.enums.EventPublishStatus;
 import com.hopoong.order.repository.EventLogRepository;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,8 +25,10 @@ public class UserPointChangedOutboxService {
     @Transactional
     public EventLog record(
             Long userId,
-            BigDecimal changeAmount,
-            BigDecimal balanceAfter,
+            Long orderId,
+            String pointType,
+            Integer changeAmount,
+            Integer balanceAfter,
             LocalDateTime occurredAt
     ) {
         String eventId = UUID.randomUUID().toString();
@@ -36,6 +37,8 @@ public class UserPointChangedOutboxService {
                 EventLogTypes.USER_POINT_CHANGED,
                 EventVersions.V1,
                 userId,
+                orderId,
+                pointType,
                 changeAmount,
                 balanceAfter,
                 occurredAt

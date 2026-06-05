@@ -25,6 +25,8 @@ public class UserPointChangedOutboxController {
     public SuccessResponse record(@RequestBody UserPointChangedOutboxRequest request) {
         EventLog saved = userPointChangedOutboxService.record(
                 request.userId(),
+                request.orderId(),
+                request.pointType(),
                 request.changeAmount(),
                 request.balanceAfter(),
                 request.occurredAt()
