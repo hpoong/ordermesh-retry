@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.hopoong.core.response.CommonResponseCodeEnum.CORE_PRODUCTS;
+import static com.hopoong.core.response.CommonResponseCodeEnum.ACCOUNT_PRODUCTS;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class ProductService {
         ProductEntity productEntity = getProductOrThrow(productId);
 
         if (productRepository.existsByProductCodeAndIdNot(request.productCode(), productId)) {
-            throw CoreException.conflict(CORE_PRODUCTS, "이미 사용중인 productCode 입니다.");
+            throw CoreException.conflict(ACCOUNT_PRODUCTS, "이미 사용중인 productCode 입니다.");
         }
 
         productEntity.updateInfo(
@@ -44,6 +44,6 @@ public class ProductService {
 
     private ProductEntity getProductOrThrow(Long productId) {
         return productRepository.findById(productId)
-                .orElseThrow(() -> CoreException.notFound(CORE_PRODUCTS, "상품을 찾을 수 없습니다."));
+                .orElseThrow(() -> CoreException.notFound(ACCOUNT_PRODUCTS, "상품을 찾을 수 없습니다."));
     }
 }

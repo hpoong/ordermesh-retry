@@ -13,9 +13,9 @@ public enum CommonResponseCodeEnum {
     // T8 : Request
     INVALID_REQUEST("T8", "common"),
 
-    // T1 : core-service
-    CORE_USERS("T1", "C01"),
-    CORE_PRODUCTS("T1", "C02"),
+    // T1 : account-service
+    ACCOUNT_USERS("T1", "C01"),
+    ACCOUNT_PRODUCTS("T1", "C02"),
 
     // T2: order-service
 

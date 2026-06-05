@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
-    private static final CommonResponseCodeEnum RESPONSE_CODE = CommonResponseCodeEnum.CORE_PRODUCTS;
+    private static final CommonResponseCodeEnum RESPONSE_CODE = CommonResponseCodeEnum.ACCOUNT_PRODUCTS;
 
     @GetMapping("/{productId}")
     public SuccessResponse getProduct(@PathVariable Long productId) {

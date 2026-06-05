@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
-    private static final CommonResponseCodeEnum RESPONSE_CODE = CommonResponseCodeEnum.CORE_USERS;
+    private static final CommonResponseCodeEnum RESPONSE_CODE = CommonResponseCodeEnum.ACCOUNT_USERS;
 
     @GetMapping("/{userId}")
     public SuccessResponse getUser(@PathVariable Long userId) {

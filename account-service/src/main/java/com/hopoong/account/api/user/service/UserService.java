@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.hopoong.core.response.CommonResponseCodeEnum.CORE_USERS;
+import static com.hopoong.core.response.CommonResponseCodeEnum.ACCOUNT_USERS;
 
 @Service
 @RequiredArgsConstructor
@@ -96,13 +96,13 @@ public class UserService {
         try {
             return UserStatus.from(status.trim());
         } catch (IllegalArgumentException exception) {
-            throw CoreException.badRequest(CORE_USERS, "유효하지 않은 status 입니다. (ACTIVE, INACTIVE, SUSPENDED)");
+            throw CoreException.badRequest(ACCOUNT_USERS, "유효하지 않은 status 입니다. (ACTIVE, INACTIVE, SUSPENDED)");
         }
     }
 
     private UserEntity getUserOrThrow(Long userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> CoreException.notFound(CORE_USERS, "사용자를 찾을 수 없습니다."));
+                .orElseThrow(() -> CoreException.notFound(ACCOUNT_USERS, "사용자를 찾을 수 없습니다."));
     }
 
     private void validateDuplicateForActiveUser(String loginId, String email, Long userId) {
@@ -110,14 +110,14 @@ public class UserService {
                 ? userRepository.existsByLoginIdAndDeletedAtIsNull(loginId)
                 : userRepository.existsByLoginIdAndIdNotAndDeletedAtIsNull(loginId, userId);
         if (duplicatedLoginId) {
-            throw CoreException.conflict(CORE_USERS, "이미 사용중인 loginId 입니다.");
+            throw CoreException.conflict(ACCOUNT_USERS, "이미 사용중인 loginId 입니다.");
         }
 
         boolean duplicatedEmail = userId == null
                 ? userRepository.existsByEmailAndDeletedAtIsNull(email)
                 : userRepository.existsByEmailAndIdNotAndDeletedAtIsNull(email, userId);
         if (duplicatedEmail) {
-            throw CoreException.conflict(CORE_USERS, "이미 사용중인 email 입니다.");
+            throw CoreException.conflict(ACCOUNT_USERS, "이미 사용중인 email 입니다.");
         }
     }
 }
