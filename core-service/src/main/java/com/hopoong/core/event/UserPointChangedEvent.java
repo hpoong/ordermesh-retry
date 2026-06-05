@@ -1,6 +1,5 @@
 package com.hopoong.core.event;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record UserPointChangedEvent(
@@ -8,8 +7,10 @@ public record UserPointChangedEvent(
         String eventType,
         String eventVersion,
         Long userId,
-        BigDecimal changeAmount,
-        BigDecimal balanceAfter,
+        Long orderId,
+        String pointType,
+        Integer changeAmount,
+        Integer balanceAfter,
         LocalDateTime occurredAt
 ) {
 }
