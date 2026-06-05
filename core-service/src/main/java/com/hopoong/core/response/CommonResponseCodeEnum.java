@@ -18,7 +18,7 @@ public enum CommonResponseCodeEnum {
     ACCOUNT_PRODUCTS("T1", "C02"),
 
     // T2: order-service
-
+    ORDER_POINT("T2", "C01"),
     ;
 
     private final String type;
