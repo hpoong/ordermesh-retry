@@ -88,11 +88,17 @@
     <label for="userId">userId</label>
     <input id="userId" type="number" value="1" />
 
+    <label for="orderId">orderId</label>
+    <input id="orderId" type="number" value="1" />
+
+    <label for="pointType">pointType</label>
+    <input id="pointType" type="text" value="EARN" />
+
     <label for="changeAmount">changeAmount</label>
-    <input id="changeAmount" type="number" step="0.01" value="100.00" />
+    <input id="changeAmount" type="number" value="100" />
 
     <label for="balanceAfter">balanceAfter</label>
-    <input id="balanceAfter" type="number" step="0.01" value="1000.00" />
+    <input id="balanceAfter" type="number" value="1000" />
 
     <label for="occurredAt">occurredAt</label>
     <input id="occurredAt" type="datetime-local" />
@@ -109,6 +115,8 @@
   <script>
     const baseUrlInput = document.getElementById("baseUrl");
     const userIdInput = document.getElementById("userId");
+    const orderIdInput = document.getElementById("orderId");
+    const pointTypeInput = document.getElementById("pointType");
     const changeAmountInput = document.getElementById("changeAmount");
     const balanceAfterInput = document.getElementById("balanceAfter");
     const occurredAtInput = document.getElementById("occurredAt");
@@ -143,6 +151,8 @@
 
       const payload = {
         userId: Number(userIdInput.value),
+        orderId: Number(orderIdInput.value),
+        pointType: pointTypeInput.value.trim(),
         changeAmount: Number(changeAmountInput.value),
         balanceAfter: Number(balanceAfterInput.value),
         occurredAt: toIsoDateTime(occurredAtInput.value)

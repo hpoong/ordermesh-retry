@@ -79,4 +79,8 @@ public class UserEntity {
         this.deletedAt = deletedAt;
         this.status = UserStatus.INACTIVE;
     }
+
+    public void updatePointBalance(Integer pointBalance) {
+        this.pointBalance = pointBalance;
+    }
 }
