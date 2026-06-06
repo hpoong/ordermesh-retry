@@ -4,9 +4,19 @@ import java.util.Arrays;
 
 public enum PointType {
 
-    EARN,
-    CANCEL,
-    EXPIRE;
+    EARN("적립"),
+    CANCEL("취소"),
+    EXPIRE("만료");
+
+    private final String koreanName;
+
+    PointType(String koreanName) {
+        this.koreanName = koreanName;
+    }
+
+    public String getKoreanName() {
+        return koreanName;
+    }
 
     public static PointType from(String value) {
         return Arrays.stream(values())
