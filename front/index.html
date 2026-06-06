@@ -28,7 +28,8 @@
       align-items: center;
     }
 
-    input {
+    input,
+    select {
       width: 100%;
       box-sizing: border-box;
       height: 34px;
@@ -92,7 +93,11 @@
     <input id="orderId" type="number" value="1" />
 
     <label for="pointType">pointType</label>
-    <input id="pointType" type="text" value="EARN" />
+    <select id="pointType">
+      <option value="EARN">적립 (EARN)</option>
+      <option value="CANCEL">취소 (CANCEL)</option>
+      <option value="EXPIRE">만료 (EXPIRE)</option>
+    </select>
 
     <label for="changeAmount">changeAmount</label>
     <input id="changeAmount" type="number" value="100" />
