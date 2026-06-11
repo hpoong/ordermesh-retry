@@ -39,10 +39,22 @@ public class UserPointChangedProcessService {
             return;
         }
 
-        UserEntity userEntity = userRepository.findById(event.userId())
+        UserEntity userEntity = userRepository.findByIdForUpdate(event.userId())
                 .orElseThrow(() -> new UserPointChangedProcessException(
                         "포인트 변경 대상 사용자를 찾을 수 없습니다. userId=" + event.userId()
                 ));
+
+        // int expectedBalance = userEntity.getPointBalance() + event.changeAmount();
+        // if (expectedBalance != event.balanceAfter()) {
+        //     throw new UserPointChangedProcessException(
+        //             "포인트 잔액이 일치하지 않습니다. current="
+        //                     + userEntity.getPointBalance()
+        //                     + ", changeAmount="
+        //                     + event.changeAmount()
+        //                     + ", balanceAfter="
+        //                     + event.balanceAfter()
+        //     );
+        // }
 
         LocalDateTime processedAt = LocalDateTime.now();
         userEntity.updatePointBalance(event.balanceAfter());
