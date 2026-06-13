@@ -35,7 +35,7 @@ public class UserPointChangedOutboxService {
         UserPointChangedEvent event = new UserPointChangedEvent(
                 eventId,
                 EventLogTypes.USER_POINT_CHANGED,
-                EventVersions.V1,
+                EventVersions.V2,
                 userId,
                 orderId,
                 pointType,
@@ -47,7 +47,7 @@ public class UserPointChangedOutboxService {
         EventLog eventLog = EventLog.builder()
                 .eventId(eventId)
                 .eventType(EventLogTypes.USER_POINT_CHANGED)
-                .eventVersion(EventVersions.V1)
+                .eventVersion(EventVersions.V2)
                 .routingKey(RabbitMqKeys.UserPointChanged.ROUTING_KEY)
                 .exchangeName(RabbitMqKeys.UserPointChanged.EXCHANGE)
                 .payload(serialize(event))
