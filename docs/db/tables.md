@@ -12,37 +12,34 @@
 
 ## 서비스별 엔티티 현황
 
-### core-service
+> JPA `@Entity` 기준. `core-service`는 스키마(Flyway)만 관리하며 엔티티 클래스는 없습니다.
 
-* `users`
-    * 사용자 정보
+### account-service
 
-* `products`
-    * 상품 정보
+| 테이블 | 엔티티 | 용도 |
+|--------|--------|------|
+| `users` | `UserEntity` | 사용자 정보, `point_balance` |
+| `products` | `ProductEntity` | 상품 정보 |
 
 ### order-service
 
-* `orders`
-    * 주문 기본 정보
-
-* `order_items`
-    * 주문 상품 목록
-
-* `payments`
-    * 결제 상태
-
-* `event_logs`
-    * 발행한 이벤트 로그 저장
+| 테이블 | 엔티티 | 용도 |
+|--------|--------|------|
+| `orders` | `Order` | 주문 기본 정보 |
+| `order_items` | `OrderItem` | 주문 상품 목록 |
+| `payments` | `Payment` | 결제 상태 |
+| `event_logs` | `EventLog` | 발행 이벤트 Outbox 로그 |
 
 ### processing-service
 
-* `point_histories`
-    * 포인트 적립 이력
-
-* `message_process_logs`
-    * Consumer 처리 성공/실패/중복 여부 기록
+| 테이블 | 엔티티 | 용도 |
+|--------|--------|------|
+| `point_histories` | `PointHistory` | 포인트 적립·차감 이력 (멱등: `event_id`) |
+| `message_process_logs` | `MessageProcessLog` | Consumer 처리 성공/실패/중복 기록 |
 
 ### recovery-service
 
-* `failed_messages`
-    * 실패 메시지 관리
+| 테이블 | 엔티티 | 용도 |
+|--------|--------|------|
+| `failed_messages` | `FailedMessage` | 실패 메시지 관리 |
+
