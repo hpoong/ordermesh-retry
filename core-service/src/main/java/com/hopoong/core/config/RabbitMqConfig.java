@@ -34,18 +34,6 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public Queue userPointChangedProcessingQueue() {
-        return new Queue(RabbitMqKeys.UserPointChanged.PROCESSING_QUEUE, true);
-    }
-
-    @Bean
-    public Binding userPointChangedProcessingBinding(Queue userPointChangedProcessingQueue, TopicExchange userPointChangedExchange) {
-        return BindingBuilder.bind(userPointChangedProcessingQueue)
-                .to(userPointChangedExchange)
-                .with(RabbitMqKeys.UserPointChanged.ROUTING_KEY);
-    }
-
-    @Bean
     public MessageConverter rabbitMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
