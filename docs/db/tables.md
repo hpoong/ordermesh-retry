@@ -1,3 +1,9 @@
+컬럼, 제약조건, 인덱스 등 테이블 상세 스키마는 Flyway 마이그레이션 파일을 참고하세요.
+
+- 경로: `core-service/src/main/resources/db/migration`
+
+---
+
 ## 서비스별 엔티티 현황
 
 - core-service: `users`, `products`
