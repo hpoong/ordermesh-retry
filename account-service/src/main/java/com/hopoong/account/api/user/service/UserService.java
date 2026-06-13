@@ -65,6 +65,7 @@ public class UserService {
     @Transactional
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         UserEntity userEntity = getUserOrThrow(userId);
+        validateDuplicateForActiveUser(userEntity.getLoginId(), request.email(), userId);
 
         userEntity.updateProfile(
                 request.name(),
