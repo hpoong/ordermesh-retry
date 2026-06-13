@@ -1,5 +1,6 @@
 package com.hopoong.processing.entity;
 
+import com.hopoong.processing.enums.MessageProcessStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -76,4 +77,27 @@ public class MessageProcessLog {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    public void markProcessing() {
+        this.processStatus = MessageProcessStatus.PROCESSING.name();
+    }
+
+    public void markSuccess(LocalDateTime processedAt, LocalDateTime ackedAt) {
+        this.processStatus = MessageProcessStatus.SUCCESS.name();
+        this.processedAt = processedAt;
+        this.ackedAt = ackedAt;
+    }
+
+    public void markDuplicate() {
+        this.processStatus = MessageProcessStatus.DUPLICATE.name();
+        this.duplicateYn = "Y";
+        this.processedAt = LocalDateTime.now();
+        this.ackedAt = LocalDateTime.now();
+    }
+
+    public void markFailed(String errorMessage) {
+        this.processStatus = MessageProcessStatus.FAILED.name();
+        this.errorMessage = errorMessage;
+        this.processedAt = LocalDateTime.now();
+    }
 }

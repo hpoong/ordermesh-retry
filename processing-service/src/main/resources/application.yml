@@ -1,9 +1,26 @@
+spring:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: user
+    password: password
+    virtual-host: ordermesh-retry
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ordermesh-retry
+    username: user
+    password: password
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
 
 logging:
   config: classpath:logback/logback-spring.xml
   level:
     root: info
 
+app:
+  account:
+    base-url: http://localhost:9000
 
 server:
   port: 9200
