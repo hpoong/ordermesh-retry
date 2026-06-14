@@ -54,7 +54,7 @@ EventLogPublishScheduler
          │
 EventLogPublishService
   └─ UserPointChangedEventPublisher
-        └─ send → user.events.v2 / user.point.changed.v2
+        └─ send → user.events / user.point.changed.v2
                                     │
                                     ▼
                          processing-service.user.point.changed.v2
@@ -82,7 +82,7 @@ EventLogPublishService
 
 | 항목 | v1 (`plan.md`) | v2 (본 문서) |
 |------|----------------|--------------|
-| MQ 발행 | `user.events.v1` / `user.point.changed` | **`user.events.v2` / `user.point.changed.v2`** |
+| MQ 발행 | `user.events.v1` / `user.point.changed` | **`user.events` / `user.point.changed.v2`** |
 | `eventVersion` | `v1` | **`v2`** |
 | MQ 소비 | account-service | **processing-service** |
 | `point_histories` | account-service | **processing-service** |
@@ -121,7 +121,7 @@ v1 [`plan.md`](plan.md) 섹션 3과 **구조는 동일**하나, **MQ·이벤트 
 |------|-------|
 | `UserPointChangedEvent.eventVersion` | `EventVersions.V2` (`"v2"`) |
 | `EventLog.eventVersion` | `EventVersions.V2` |
-| `EventLog.exchangeName` | `RabbitMqKeys.UserPointChangedV2.EXCHANGE` → `user.events.v2` |
+| `EventLog.exchangeName` | `RabbitMqKeys.UserPointChangedV2.EXCHANGE` → `user.events` |
 | `EventLog.routingKey` | `RabbitMqKeys.UserPointChangedV2.ROUTING_KEY` → `user.point.changed` |
 
 ### 4.2 발행 파이프라인 (유지)
@@ -309,7 +309,7 @@ public record UserPointChangedEvent(
 
 | 상수 | v1 (레거시·제거) | **v2 값** |
 |------|------------------|-----------|
-| `EXCHANGE` | `user.events.v1` | **`user.events.v2`** |
+| `EXCHANGE` | `user.events.v1` | **`user.events`** |
 | `ROUTING_KEY` | `user.point.changed` | **`user.point.changed.v2`** |
 | `QUEUE` | `account-service.user.point.changed.v1` | **`processing-service.user.point.changed.v2`** |
 | `DLQ` | `{v1_queue}.dlq` | **`processing-service.user.point.changed.v2.dlq`** |
@@ -535,7 +535,7 @@ front/index.html    # Outbox record (payload eventVersion은 서버가 v2로 기
 
 - DB에 `users(id)`, `orders(id)` FK 대상 데이터 존재
 - account-service internal API 네트워크 접근 가능 (processing → account)
-- RabbitMQ에 `user.events.v2` exchange·`processing-service.user.point.changed.v2` 큐·binding 존재
+- RabbitMQ에 `user.events` exchange·`processing-service.user.point.changed.v2` 큐·binding 존재
 
 ---
 

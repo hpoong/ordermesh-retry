@@ -6,7 +6,7 @@ public final class RabbitMqKeys {
 
     public static final class UserPointChangedV2 {
 
-        public static final String EXCHANGE = "user.events.v2";
+        public static final String EXCHANGE = "user.events";
         public static final String ROUTING_KEY = "user.point.changed";
         public static final String QUEUE = "processing-service.user.point.changed.v2";
         public static final String DLQ = QUEUE + ".dlq";

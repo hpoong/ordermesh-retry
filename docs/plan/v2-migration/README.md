@@ -28,7 +28,7 @@ flowchart LR
     end
 
     subgraph mq [RabbitMQ_v2]
-        EX[user.events.v2]
+        EX[user.events]
         Q[processing_queue_v2]
     end
 
@@ -71,7 +71,7 @@ flowchart LR
 
 ### 반드시 지킬 것
 
-1. **order-service v2 발행** — `EventVersions.V2`, `user.events.v2`, `user.point.changed.v2`
+1. **order-service v2 발행** — `EventVersions.V2`, `user.events`, `user.point.changed.v2`
 2. **MQ v2 계약 단일화** — `PROCESSING_QUEUE` fan-out 패턴 사용 금지
 3. **서비스 경계** — processing이 `users` 직접 수정 금지, account가 `point_histories` 접근 금지
 4. **멱등 키** — processing `event_id` 단일 (`point_histories`·`message_process_logs`)

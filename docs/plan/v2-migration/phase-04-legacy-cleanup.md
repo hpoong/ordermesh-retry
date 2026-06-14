@@ -105,7 +105,7 @@ RabbitMQ Management UI 또는 CLI:
 | binding | `user.events.v1` ↔ v1 account queue |
 | (선택) exchange | `user.events.v1` — 다른 이벤트·큐 없으면 삭제 |
 
-**유지:** `user.events.v2`, `processing-service.user.point.changed.v2` 및 binding
+**유지:** `user.events`, `processing-service.user.point.changed.v2` 및 binding
 
 ### 7. 문서 갱신
 

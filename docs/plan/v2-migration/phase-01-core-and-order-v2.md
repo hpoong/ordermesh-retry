@@ -26,7 +26,7 @@ v1 account 큐·fan-out(`PROCESSING_QUEUE` + 동일 routing key) 패턴은 **사
 
 | 상수 | v2 값 |
 |------|-------|
-| `EXCHANGE` | `user.events.v2` |
+| `EXCHANGE` | `user.events` |
 | `ROUTING_KEY` | `user.point.changed` |
 | `QUEUE` | `processing-service.user.point.changed.v2` |
 | `DLQ` | `processing-service.user.point.changed.v2.dlq` |
@@ -59,7 +59,7 @@ public static final String V2 = "v2";
 ```java
 public static final class UserPointChangedV2 {
 
-    public static final String EXCHANGE = "user.events.v2";
+    public static final String EXCHANGE = "user.events";
     public static final String ROUTING_KEY = "user.point.changed";
     public static final String QUEUE = "processing-service.user.point.changed.v2";
     public static final String DLQ = QUEUE + ".dlq";
@@ -77,7 +77,7 @@ public static final class UserPointChangedV2 {
 
 | Bean | 설명 |
 |------|------|
-| `userPointChangedExchange()` | `user.events.v2` TopicExchange (durable) |
+| `userPointChangedExchange()` | `user.events` TopicExchange (durable) |
 | `userPointChangedQueue()` | `processing-service.user.point.changed.v2` durable queue |
 | `userPointChangedBinding()` | exchange + `user.point.changed` routing key |
 | (선택) `userPointChangedDlq()` | DLQ queue — 정책 확정 후 |
@@ -133,7 +133,7 @@ public static final class UserPointChangedV2 {
 
 ### RabbitMQ
 
-- [ ] exchange `user.events.v2` 존재
+- [ ] exchange `user.events` 존재
 - [ ] 큐 `processing-service.user.point.changed.v2` 존재
 - [ ] `user.point.changed` routing key로 binding 확인
 - [ ] (Phase 4 전) v1 큐 `account-service.user.point.changed.v1` — **신규 v2 메시지 미유입** 확인
