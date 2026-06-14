@@ -121,8 +121,8 @@ v1 [`plan.md`](plan.md) 섹션 3과 **구조는 동일**하나, **MQ·이벤트 
 |------|-------|
 | `UserPointChangedEvent.eventVersion` | `EventVersions.V2` (`"v2"`) |
 | `EventLog.eventVersion` | `EventVersions.V2` |
-| `EventLog.exchangeName` | `RabbitMqKeys.UserPointChanged.EXCHANGE` → `user.events.v2` |
-| `EventLog.routingKey` | `RabbitMqKeys.UserPointChanged.ROUTING_KEY` → `user.point.changed.v2` |
+| `EventLog.exchangeName` | `RabbitMqKeys.UserPointChangedV2.EXCHANGE` → `user.events.v2` |
+| `EventLog.routingKey` | `RabbitMqKeys.UserPointChangedV2.ROUTING_KEY` → `user.point.changed` |
 
 ### 4.2 발행 파이프라인 (유지)
 
@@ -159,7 +159,7 @@ v1 routing key로 발행된 메시지는 v2 Consumer가 **수신하지 않는다
 ### 5.2 Consumer
 
 ```java
-@RabbitListener(queues = RabbitMqKeys.UserPointChanged.QUEUE)
+@RabbitListener(queues = RabbitMqKeys.UserPointChangedV2.QUEUE)
 public void consumeUserPointChanged(UserPointChangedEvent message) { ... }
 ```
 
@@ -494,7 +494,7 @@ front/index.html    # Outbox record (payload eventVersion은 서버가 v2로 기
 ## 12. v2 구현 체크리스트
 
 1. [ ] `EventVersions.V2` 추가
-2. [ ] `RabbitMqKeys.UserPointChanged` v2 계약 (exchange·routing key·queue)
+2. [ ] `RabbitMqKeys.UserPointChangedV2` v2 계약 (exchange·routing key·queue)
 3. [ ] `RabbitMqConfig` v2 exchange·queue·binding만 선언 (v1 Bean 제거)
 4. [ ] order `UserPointChangedOutboxService` v2 발행 반영
 5. [ ] in-flight v1 `event_logs` 처리

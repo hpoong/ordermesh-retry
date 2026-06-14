@@ -86,7 +86,7 @@ processing-service/src/main/java/com/hopoong/processing/
 **파일:** `UserPointChangedConsumer.java`
 
 ```java
-@RabbitListener(queues = RabbitMqKeys.UserPointChanged.QUEUE)
+@RabbitListener(queues = RabbitMqKeys.UserPointChangedV2.QUEUE)
 public void consumeUserPointChanged(UserPointChangedEvent message) { ... }
 ```
 

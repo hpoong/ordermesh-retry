@@ -27,7 +27,7 @@ v1 account 큐·fan-out(`PROCESSING_QUEUE` + 동일 routing key) 패턴은 **사
 | 상수 | v2 값 |
 |------|-------|
 | `EXCHANGE` | `user.events.v2` |
-| `ROUTING_KEY` | `user.point.changed.v2` |
+| `ROUTING_KEY` | `user.point.changed` |
 | `QUEUE` | `processing-service.user.point.changed.v2` |
 | `DLQ` | `processing-service.user.point.changed.v2.dlq` |
 | `eventVersion` | `v2` (`EventVersions.V2`) |
@@ -40,7 +40,7 @@ v1 account 큐·fan-out(`PROCESSING_QUEUE` + 동일 routing key) 패턴은 **사
 
 이전 `phase-01-mq-infrastructure` fan-out 구현이 있다면 **먼저 제거**:
 
-- `RabbitMqKeys.UserPointChanged.PROCESSING_QUEUE`, `PROCESSING_DLQ`
+- `RabbitMqKeys.UserPointChangedV2.PROCESSING_QUEUE`, `PROCESSING_DLQ`
 - `RabbitMqConfig.userPointChangedProcessingQueue()`, `userPointChangedProcessingBinding()`
 - v1 `userPointChangedQueue()`, `userPointChangedBinding()` — v2 전환 시 **함께 제거** (Phase 4에서 MQ UI 정리)
 
@@ -57,14 +57,14 @@ public static final String V2 = "v2";
 **파일:** `core-service/src/main/java/com/hopoong/core/keys/rabbitmq/RabbitMqKeys.java`
 
 ```java
-public static final class UserPointChanged {
+public static final class UserPointChangedV2 {
 
     public static final String EXCHANGE = "user.events.v2";
-    public static final String ROUTING_KEY = "user.point.changed.v2";
+    public static final String ROUTING_KEY = "user.point.changed";
     public static final String QUEUE = "processing-service.user.point.changed.v2";
     public static final String DLQ = QUEUE + ".dlq";
 
-    private UserPointChanged() { }
+    private UserPointChangedV2() { }
 }
 ```
 
@@ -79,7 +79,7 @@ public static final class UserPointChanged {
 |------|------|
 | `userPointChangedExchange()` | `user.events.v2` TopicExchange (durable) |
 | `userPointChangedQueue()` | `processing-service.user.point.changed.v2` durable queue |
-| `userPointChangedBinding()` | exchange + `user.point.changed.v2` routing key |
+| `userPointChangedBinding()` | exchange + `user.point.changed` routing key |
 | (선택) `userPointChangedDlq()` | DLQ queue — 정책 확정 후 |
 
 **제거 대상 (v1 / fan-out):**
@@ -95,8 +95,8 @@ public static final class UserPointChanged {
 |------|------|
 | `UserPointChangedEvent` | `EventVersions.V2` |
 | `EventLog.eventVersion` | `EventVersions.V2` |
-| `EventLog.exchangeName` | `RabbitMqKeys.UserPointChanged.EXCHANGE` |
-| `EventLog.routingKey` | `RabbitMqKeys.UserPointChanged.ROUTING_KEY` |
+| `EventLog.exchangeName` | `RabbitMqKeys.UserPointChangedV2.EXCHANGE` |
+| `EventLog.routingKey` | `RabbitMqKeys.UserPointChangedV2.ROUTING_KEY` |
 
 `UserPointChangedEventPublisher` — 변경 없음 (`eventLog`의 exchange·routing key 사용).
 
@@ -135,13 +135,13 @@ public static final class UserPointChanged {
 
 - [ ] exchange `user.events.v2` 존재
 - [ ] 큐 `processing-service.user.point.changed.v2` 존재
-- [ ] `user.point.changed.v2` routing key로 binding 확인
+- [ ] `user.point.changed` routing key로 binding 확인
 - [ ] (Phase 4 전) v1 큐 `account-service.user.point.changed.v1` — **신규 v2 메시지 미유입** 확인
 
 ### order 발행
 
 1. [ ] `front/index.html` Outbox record
-2. [ ] `event_logs`: `event_version = v2`, `routing_key = user.point.changed.v2`, `publish_status = PUBLISHED`
+2. [ ] `event_logs`: `event_version = v2`, `routing_key = user.point.changed`, `publish_status = PUBLISHED`
 3. [ ] RabbitMQ processing v2 큐에 메시지 Ready (Consumer 없음 → 정상)
 
 ### v1 격리

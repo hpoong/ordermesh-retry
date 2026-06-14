@@ -70,7 +70,7 @@ EventLogPublishService
 - `event_logs`에 `publish_status = READY`로 INSERT
 - payload는 `UserPointChangedEvent` record를 JSON 직렬화
 - `eventId`는 UUID, `eventType = USER_POINT_CHANGED`, `eventVersion = v1`
-- MQ 키는 `RabbitMqKeys.UserPointChanged` 상수 사용 (하드코딩 금지)
+- MQ 키는 `RabbitMqKeys.UserPointChangedV2` 상수 사용 (하드코딩 금지)
 
 ### 3.2 스케줄러 발행
 
@@ -184,10 +184,10 @@ public record UserPointChangedEvent(
 |------------|-----|
 | `EventLogTypes.USER_POINT_CHANGED` | `"USER_POINT_CHANGED"` |
 | `EventVersions.V1` | `"v1"` |
-| `RabbitMqKeys.UserPointChanged.EXCHANGE` | `user.events.v1` |
-| `RabbitMqKeys.UserPointChanged.ROUTING_KEY` | `user.point.changed` |
-| `RabbitMqKeys.UserPointChanged.QUEUE` | `account-service.user.point.changed.v1` |
-| `RabbitMqKeys.UserPointChanged.DLQ` | `account-service.user.point.changed.v1.dlq` |
+| `RabbitMqKeys.UserPointChangedV2.EXCHANGE` | `user.events.v1` |
+| `RabbitMqKeys.UserPointChangedV2.ROUTING_KEY` | `user.point.changed` |
+| `RabbitMqKeys.UserPointChangedV2.QUEUE` | `account-service.user.point.changed.v1` |
+| `RabbitMqKeys.UserPointChangedV2.DLQ` | `account-service.user.point.changed.v1.dlq` |
 
 MQ 키·이벤트 타입·버전은 **core-service 상수만** 사용한다. 서비스별 하드코딩 금지.
 
