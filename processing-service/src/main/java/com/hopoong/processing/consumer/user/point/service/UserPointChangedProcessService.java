@@ -47,7 +47,7 @@ public class UserPointChangedProcessService {
                         .eventId(event.eventId())
                         .eventType(EventLogTypes.USER_POINT_CHANGED)
                         .consumerName(CONSUMER_NAME)
-                        .queueName(RabbitMqKeys.UserPointChanged.QUEUE)
+                        .queueName(RabbitMqKeys.UserPointChangedV2.QUEUE)
                         .processStatus(MessageProcessStatus.RECEIVED.name())
                         .receivedAt(now)
                         .duplicateYn("N")

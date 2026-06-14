@@ -18,19 +18,19 @@ public class RabbitMqConfig {
 
     @Bean
     public TopicExchange userPointChangedExchange() {
-        return new TopicExchange(RabbitMqKeys.UserPointChanged.EXCHANGE, true, false);
+        return new TopicExchange(RabbitMqKeys.UserPointChangedV2.EXCHANGE, true, false);
     }
 
     @Bean
     public Queue userPointChangedQueue() {
-        return new Queue(RabbitMqKeys.UserPointChanged.QUEUE, true);
+        return new Queue(RabbitMqKeys.UserPointChangedV2.QUEUE, true);
     }
 
     @Bean
     public Binding userPointChangedBinding(Queue userPointChangedQueue, TopicExchange userPointChangedExchange) {
         return BindingBuilder.bind(userPointChangedQueue)
                 .to(userPointChangedExchange)
-                .with(RabbitMqKeys.UserPointChanged.ROUTING_KEY);
+                .with(RabbitMqKeys.UserPointChangedV2.ROUTING_KEY);
     }
 
     @Bean
