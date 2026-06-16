@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.1'
 	id 'io.spring.dependency-management' version '1.1.5'
+	id 'org.flywaydb.flyway' version '10.17.3'
 }
 
 java {
@@ -33,6 +34,17 @@ dependencies {
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// flyway gradle plugin runtime
+	flyway 'org.flywaydb:flyway-database-postgresql'
+	flyway 'org.postgresql:postgresql'
+}
+
+flyway {
+	url = System.getenv('FLYWAY_URL') ?: 'jdbc:postgresql://localhost:5432/ordermesh-retry'
+	user = System.getenv('FLYWAY_USER') ?: 'user'
+	password = System.getenv('FLYWAY_PASSWORD') ?: 'password'
+	locations = ['classpath:db/migration']
 }
 
 tasks.named('test') {
