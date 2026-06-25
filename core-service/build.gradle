@@ -1,9 +1,21 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'org.flywaydb:flyway-gradle-plugin:10.17.3'
+		classpath 'org.flywaydb:flyway-database-postgresql:10.17.3'
+		classpath 'org.postgresql:postgresql:42.7.3'
+	}
+}
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.3.1'
 	id 'io.spring.dependency-management' version '1.1.5'
-	id 'org.flywaydb.flyway' version '10.17.3'
 }
+
+apply plugin: 'org.flywaydb.flyway'
 
 java {
 	toolchain {
@@ -34,10 +46,6 @@ dependencies {
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-
-	// flyway gradle plugin runtime
-	flyway 'org.flywaydb:flyway-database-postgresql'
-	flyway 'org.postgresql:postgresql'
 }
 
 flyway {
