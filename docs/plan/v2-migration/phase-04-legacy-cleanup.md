@@ -111,10 +111,10 @@ RabbitMQ Management UI 또는 CLI:
 
 | 문서 | 내용 |
 |------|------|
-| [docs/process/account-service.md](../../process/account-service.md) | v2 역할 (internal API, Consumer 없음) |
-| [docs/process/processing-service.md](../../process/processing-service.md) | v2 오케스트레이션 |
+| [docs/process/account-service.md](../../services/account-service.md) | v2 역할 (internal API, Consumer 없음) |
+| [docs/process/processing-service.md](../../services/processing-service.md) | v2 오케스트레이션 |
 | [docs/db/tables.md](../../db/tables.md) | `point_histories` → processing 소유 |
-| [docs/process/core-service.md](../../process/core-service.md) | v2 MQ key |
+| [docs/process/core-service.md](../../services/core-service.md) | v2 MQ key |
 | [plan.md](../plan.md) | v1 레거시 표시, v2_plan 링크 |
 
 ### 8. 범위 외 (후속 스프린트)
