@@ -8,7 +8,7 @@
 
 ## 목적
 
-`failed_messages`에 적재된 실패 건을 **원본 exchange/routing_key로 재발행**하여 processing이 다시 처리할 수 있게 한다.
+ingest 큐를 통해 `failed_messages`에 적재된 실패 건을 **원본 exchange/routing_key로 재발행**하여 processing이 다시 처리할 수 있게 한다.
 
 수동 reprocess API를 먼저 구현하고, (선택) 자동 Scheduler를 추가한다.
 
@@ -16,7 +16,7 @@
 
 ## 전제조건
 
-- [ ] Phase 2: `failed_messages` 적재·DLQ 동기화 E2E 완료
+- [ ] Phase 2: ingest 큐 → `failed_messages` E2E 완료
 - [ ] processing v2 Consumer·멱등 검사(`eventId`) 정상 동작 확인
 - [ ] 재처리 대상 `exchange_name`, `routing_key`가 `failed_messages`에 저장됨
 
@@ -33,7 +33,7 @@
 
 **재발행 대상:**
 
-- `exchange_name` + `routing_key` (엔티티 필드)
+- `exchange_name` + `routing_key` (ingest 시 저장된 메타)
 - 대상 큐: `processing-service.user.point.changed.v2`
 
 **재처리 시 멱등:**
@@ -66,16 +66,17 @@ processing의 `eventId` 중복 검사가 있으므로, 이미 `SUCCESS`/`DUPLICA
 6. 성공 → `SUCCESS`, `reprocessed_at = now`
 7. 실패 → `FAILED`, `failure_reason` 갱신
 
-### 2. Internal API — reprocess
+### 2. Internal API — reprocess·조회
 
-**파일:** `FailedMessageInternalController.java` (확장)
+**파일:** `FailedMessageInternalController.java` (Phase 1 확장)
 
 | Method | Path | 설명 |
 |--------|------|------|
 | `POST` | `/internal/v1/failed-messages/{id}/reprocess` | 단건 재처리 |
 | `POST` | `/internal/v1/failed-messages/reprocess` | (선택) 복수 ID 일괄 재처리 |
+| `GET` | `/internal/v1/failed-messages` | Phase 1 조회 API 유지 |
 
-응답: 재처리 결과 (`reprocess_status`, `reprocessed_at`)
+> 실패 **적재**는 MQ(Phase 2)만 사용. reprocess API는 **운영·E2E**용 HTTP.
 
 ### 3. (선택) `FailedMessageReprocessScheduler`
 
@@ -86,19 +87,6 @@ processing의 `eventId` 중복 검사가 있으므로, 이미 `SUCCESS`/`DUPLICA
 - `reprocess_status = WAITING`
 - `failure_type IN (SYSTEM, TIMEOUT)`
 - `last_failed_at` + N분 경과
-- `fixed-delay` 스케줄 (`@EnableScheduling` — core `SchedulingConfig` 활용)
-
-설정:
-
-```yaml
-app:
-  recovery:
-    reprocess:
-      enabled: false          # 기본 비활성
-      fixed-delay-seconds: 300
-      eligible-failure-types: SYSTEM,TIMEOUT
-      min-wait-minutes: 5
-```
 
 ### 4. `FailedMessage` 도메인 메서드
 
@@ -142,7 +130,7 @@ recovery-service/src/main/java/com/hopoong/recovery/
 
 ### 수동 reprocess (Phase 3-A)
 
-1. [ ] Phase 2에서 `BUSINESS` 실패 건 1건 확보 (`reprocess_status = WAITING`)
+1. [ ] Phase 2에서 ingest 경유 `BUSINESS` 실패 건 1건 확보
 2. [ ] 실패 원인 해소 (예: userId 생성, account 정상화)
 3. [ ] `POST /internal/v1/failed-messages/{id}/reprocess` 호출
 4. [ ] main queue → processing → `message_process_logs` `SUCCESS`
@@ -150,11 +138,11 @@ recovery-service/src/main/java/com/hopoong/recovery/
 
 ### 재처리 실패
 
-- [ ] account 여전히 5xx → reprocess `FAILED` 또는 `WAITING` 복귀, `failure_reason` 갱신
+- [ ] account 여전히 5xx → reprocess `FAILED` 또는 `WAITING` 복귀
 
 ### 멱등·중복
 
-- [ ] 이미 processing `SUCCESS`인 eventId reprocess → processing `DUPLICATE`, 데이터 오염 없음
+- [ ] 이미 processing `SUCCESS`인 eventId reprocess → processing `DUPLICATE`
 
 ### (선택) 자동 Scheduler (Phase 3-B)
 
@@ -169,7 +157,7 @@ recovery-service/src/main/java/com/hopoong/recovery/
 |------|------|
 | reprocess API 비활성 | Controller endpoint 제거 또는 feature flag |
 | Scheduler | `app.recovery.reprocess.enabled=false` |
-| 잘못 재발행된 메시지 | main queue purge (개발), processing DUPLICATE/SUCCESS로 자연 소멸 |
+| 잘못 재발행된 메시지 | main queue purge (개발) |
 
 ---
 
@@ -177,12 +165,6 @@ recovery-service/src/main/java/com/hopoong/recovery/
 
 ```text
 feat(recovery-service): [recovery] failed-messages 재처리 API 구현
-```
-
-Scheduler 포함 시:
-
-```text
-feat(recovery-service): [recovery] SYSTEM/TIMEOUT 자동 재처리 스케줄러 추가
 ```
 
 ---

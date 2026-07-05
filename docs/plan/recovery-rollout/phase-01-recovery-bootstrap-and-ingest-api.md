@@ -1,4 +1,4 @@
-# Phase 1: recovery-service 기반 + failed-messages 적재 API
+# Phase 1: recovery-service 기반 + ingest 서비스
 
 > **선행:** [v2-migration Phase 3](../v2-migration/phase-03-processing-service.md) (processing v2 Consumer·오케스트레이션)  
 > **후행:** [Phase 2](phase-02-dlq-and-processing-failure-handling.md)  
@@ -8,9 +8,9 @@
 
 ## 목적
 
-recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_messages` 적재·조회 Internal API를 구현한다.
+recovery-service를 **독립 기동 가능한 상태**로 만들고, `FailedMessageIngestService`와 **운영 조회용 Internal API**를 구현한다.
 
-이 Phase에서는 processing 연동·DLQ·재처리는 **범위 밖**이다. 수동 HTTP 호출로 적재 API를 검증한다.
+런타임 실패 적재는 Phase 2에서 **MQ Consumer**가 담당한다. Phase 1에서는 processing 연동·MQ·재처리는 **범위 밖**이다.
 
 ---
 
@@ -18,7 +18,7 @@ recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_mes
 
 - [ ] PostgreSQL docker-compose 기동 가능 (processing과 동일 DB)
 - [ ] `failed_messages` 테이블이 Flyway V1로 생성되어 있음
-- [ ] [recovery-init README](README.md) 아키텍처·소유권 원칙 숙지
+- [ ] [recovery-rollout README](README.md) MQ 단일 경로·소유권 원칙 숙지
 
 ---
 
@@ -31,7 +31,7 @@ recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_mes
 | 의존성 | 용도 |
 |--------|------|
 | `runtimeOnly 'org.postgresql:postgresql'` | DB 연결 |
-| `implementation 'org.springframework.boot:spring-boot-starter-amqp'` | Phase 2 DLQ Consumer 선행 준비 (선택: Phase 2에서 추가) |
+| `implementation 'org.springframework.boot:spring-boot-starter-amqp'` | Phase 2 Ingest Consumer 선행 준비 |
 
 `processing-service/build.gradle`과 동일한 Spring Boot·JPA 패턴을 따른다.
 
@@ -44,6 +44,7 @@ recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_mes
 | `server.port` | `9300` (기존 유지) |
 | `spring.datasource.*` | processing과 동일 PostgreSQL |
 | `spring.jpa.*` | `ddl-auto: validate`, `open-in-view: false` |
+| `spring.rabbitmq.*` | localhost (Phase 2 Consumer 선행) |
 | `app.recovery.max-retry-count` | `3` (스키마 DEFAULT와 일치) |
 
 ### 3. Enum 추가
@@ -78,36 +79,25 @@ recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_mes
 
 **패키지:** `recovery-service/src/main/java/com/hopoong/recovery/ingest/`
 
-공통 적재 로직 (Phase 2 DLQ Consumer에서도 재사용):
+Phase 2 MQ Consumer와 Phase 1 수동 검증에서 **공통 사용**:
 
 1. `(consumer_name, event_id)` UK 기준 존재 여부 확인
-2. 신규 → INSERT (`reprocess_status = WAITING`, `dlq_stored_yn = N`)
+2. 신규 → INSERT (`reprocess_status = WAITING`, `dlq_stored_yn`은 출처에 따라 설정)
 3. 기존 → `failure_reason`, `retry_count`, `last_failed_at` 갱신 (멱등)
 
-### 7. Internal API
+입력: `FailedMessageIngestCommand` (eventId, consumerName, queueName, exchangeName, routingKey, payload, failureType, failureReason, retryCount, dlqStoredYn)
+
+### 7. Internal API — 조회·수동 적재 (운영·E2E용)
+
+> **런타임 경로는 MQ**이다. POST API는 E2E·운영 수동 적재용으로만 둔다. processing에서 HTTP 호출 **금지**.
 
 **패키지:** `recovery-service/src/main/java/com/hopoong/recovery/api/internal/`
 
 | Method | Path | 설명 |
 |--------|------|------|
-| `POST` | `/internal/v1/failed-messages` | 실패 메시지 적재 (멱등) |
+| `POST` | `/internal/v1/failed-messages` | (선택) 수동 적재 — E2E·운영용 |
 | `GET` | `/internal/v1/failed-messages` | 목록 (`reprocess_status`, `failure_type` 필터) |
 | `GET` | `/internal/v1/failed-messages/{id}` | 상세 조회 |
-
-**POST 요청 필드 (제안):**
-
-| 필드 | 필수 | 설명 |
-|------|------|------|
-| `eventId` | Y | 이벤트 ID |
-| `consumerName` | Y | Consumer 이름 |
-| `queueName` | Y | 수신 큐 |
-| `exchangeName` | Y | Exchange |
-| `routingKey` | Y | Routing key |
-| `payload` | Y | 원본 JSON |
-| `failureType` | Y | `BUSINESS` / `SYSTEM` / `TIMEOUT` |
-| `failureReason` | Y | 실패 상세 |
-| `retryCount` | N | 기본 0 |
-| `maxRetryCount` | N | 기본 3 |
 
 응답 형식은 `CommonResponse` / `SuccessResponse` (core-service) 패턴을 따른다.
 
@@ -116,7 +106,7 @@ recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_mes
 **파일:** `docker-compose/docker-compose.yml`
 
 - `recovery-service` 컨테이너 추가 (port 9300)
-- `depends_on`: postgres, rabbitmq (Phase 2 전 rabbitmq는 선택)
+- `depends_on`: postgres, rabbitmq
 
 ---
 
@@ -126,7 +116,7 @@ recovery-service를 **독립 기동 가능한 상태**로 만들고, `failed_mes
 recovery-service/src/main/java/com/hopoong/recovery/
 ├── RecoveryServiceApplication.java
 ├── config/
-│   └── RecoveryProperties.java          # max-retry-count 등
+│   └── RecoveryProperties.java
 ├── enums/
 │   ├── FailureType.java
 │   └── ReprocessStatus.java
@@ -135,8 +125,9 @@ recovery-service/src/main/java/com/hopoong/recovery/
 ├── repository/
 │   └── FailedMessageRepository.java
 ├── ingest/
-│   └── FailedMessageIngestService.java
-└── api/internal/
+│   ├── FailedMessageIngestService.java
+│   └── FailedMessageIngestCommand.java
+└── api/internal/                          # 조회·수동 적재 (운영용)
     ├── FailedMessageInternalController.java
     └── dto/
         ├── FailedMessageCreateRequest.java
@@ -153,7 +144,7 @@ recovery-service/src/main/java/com/hopoong/recovery/
 | **수정** | `recovery-service/build.gradle`, `application.yml` |
 | **수정** | `docker-compose/docker-compose.yml` |
 | **금지** | `processing-service/**` (Phase 2) |
-| **금지** | `core-service/RabbitMqConfig` DLQ Bean (Phase 2) |
+| **금지** | ingest 큐 Bean·Consumer (Phase 2) |
 
 ---
 
@@ -164,12 +155,16 @@ recovery-service/src/main/java/com/hopoong/recovery/
 - [ ] recovery-service 기동 (port 9300)
 - [ ] PostgreSQL 연결·JPA `failed_messages` 매핑 정상
 
-### API (수동)
+### IngestService (단위·수동)
 
-1. [ ] `POST /internal/v1/failed-messages` — 신규 INSERT, `reprocess_status = WAITING`
-2. [ ] 동일 `(consumer_name, event_id)` 재요청 — 멱등 upsert (UK 위반 없음)
-3. [ ] `GET /internal/v1/failed-messages` — 목록·필터 조회
-4. [ ] `GET /internal/v1/failed-messages/{id}` — 상세 조회
+1. [ ] `FailedMessageIngestService.ingest()` — 신규 INSERT, `reprocess_status = WAITING`
+2. [ ] 동일 `(consumer_name, event_id)` 재호출 — 멱등 upsert (UK 위반 없음)
+
+### API (운영·E2E)
+
+1. [ ] `GET /internal/v1/failed-messages` — 목록·필터 조회
+2. [ ] `GET /internal/v1/failed-messages/{id}` — 상세 조회
+3. [ ] (선택) `POST /internal/v1/failed-messages` — 수동 적재
 
 ### DB
 
@@ -191,11 +186,11 @@ recovery-service/src/main/java/com/hopoong/recovery/
 ## 커밋 메시지 예시
 
 ```text
-feat(recovery-service): [recovery] failed-messages 적재 API 및 기반 구축
+feat(recovery-service): [recovery] failed-messages ingest 서비스 및 조회 API
 ```
 
 ---
 
 ## 다음 단계
 
-[Phase 2: DLQ + processing 실패 분기](phase-02-dlq-and-processing-failure-handling.md)
+[Phase 2: MQ 실패 전달 + processing 실패 분기](phase-02-dlq-and-processing-failure-handling.md)

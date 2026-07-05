@@ -1,4 +1,4 @@
-# Phase 2: MQ DLQ + processing 실패 분기 + DLQ Consumer
+# Phase 2: MQ 실패 전달 + processing 실패 분기 + Ingest Consumer
 
 > **선행:** [Phase 1](phase-01-recovery-bootstrap-and-ingest-api.md)  
 > **후행:** [Phase 3](phase-03-reprocess.md)  
@@ -8,15 +8,42 @@
 
 ## 목적
 
-processing 소비 실패를 **유형별로 분기**하고, 복구 불가 건은 recovery API로 적재하며, 일시 오류는 retry 후 DLQ로 이동시킨다.
+processing 소비 실패를 **유형별로 분기**하고, 모든 종료 실패를 **MQ ingest 큐**로 recovery에 전달한다.
 
-recovery-service DLQ Consumer가 DLQ 메시지를 `failed_messages`에 동기화한다.
+recovery-service `FailedMessageIngestConsumer`가 ingest 큐(및 DLQ 백업)를 소비해 `failed_messages`에 적재한다.
+
+**processing → recovery HTTP 호출은 사용하지 않는다.**
+
+---
+
+## MQ 계약
+
+| 상수 | 값 | 소유 |
+|------|-----|------|
+| Main Queue | `processing-service.user.point.changed.v2` | processing |
+| Ingest Queue | `recovery-service.failed-messages.ingest` | recovery |
+| Main DLQ | `processing-service.user.point.changed.v2.dlq` | processing (DLX 백업) |
+| Ingest 메시지 | `FailedMessageIngestEvent` | core 또는 processing DTO |
+
+`FailedMessageIngestEvent` 필드 (제안):
+
+| 필드 | 설명 |
+|------|------|
+| `eventId` | 이벤트 ID |
+| `consumerName` | Consumer 이름 |
+| `queueName` | 원본 수신 큐 |
+| `exchangeName` | 원본 exchange |
+| `routingKey` | 원본 routing key |
+| `payload` | 원본 `UserPointChangedEvent` JSON |
+| `failureType` | `BUSINESS` / `SYSTEM` / `TIMEOUT` |
+| `failureReason` | 실패 상세 |
+| `retryCount` | 누적 재시도 횟수 |
 
 ---
 
 ## 전제조건
 
-- [ ] Phase 1: recovery Internal API 기동·수동 적재 검증 완료
+- [ ] Phase 1: `FailedMessageIngestService`·조회 API 기동 검증 완료
 - [ ] Phase 2 착수 전 **retry 메커니즘** 확정 (Spring AMQP RetryInterceptor 권장)
 - [ ] RabbitMQ docker-compose 기동 가능
 
@@ -24,93 +51,92 @@ recovery-service DLQ Consumer가 DLQ 메시지를 `failed_messages`에 동기화
 
 ## 시나리오 정책 (이 Phase 범위)
 
-### S2. 복구 불가 — 즉시 failed_messages 적재
+### S2. 복구 불가 — ingest 큐 즉시 publish
 
-| 조건 | failure_type | message_process_logs | MQ | recovery |
-|------|--------------|----------------------|-----|----------|
-| 필수값 누락 / 잘못된 pointType | `BUSINESS` | `FAILED` | ack (requeue 금지) | Internal API |
-| 미지원 eventVersion | `BUSINESS` | `FAILED` | ack | Internal API |
-| 잘못된 eventType | `BUSINESS` | `FAILED` | ack | Internal API |
-| account 404 | `BUSINESS` | `FAILED` | ack | Internal API |
+| 조건 | failure_type | message_process_logs | main MQ | recovery |
+|------|--------------|----------------------|---------|----------|
+| 필수값 누락 / 잘못된 pointType | `BUSINESS` | `FAILED` | publish 후 **ack** | ingest Consumer |
+| 미지원 eventVersion | `BUSINESS` | `FAILED` | publish 후 ack | ingest Consumer |
+| 잘못된 eventType | `BUSINESS` | `FAILED` | publish 후 ack | ingest Consumer |
+| account 4xx | `BUSINESS` | `FAILED` | publish 후 ack | ingest Consumer |
 
-**핵심:** 예외 rethrow 대신 **실패 기록 → recovery API 호출 → 정상 ack**.
+**핵심:** 예외 rethrow 대신 **실패 기록 → ingest 큐 publish → main ack**. **retry 금지**.
 
-### S3. 일시 오류 — retry 후 DLQ
+### S3. 일시 오류 — retry 후 ingest 큐 publish
 
 | 조건 | failure_type | 1~N회 | retry 초과 |
 |------|--------------|-------|------------|
-| account 5xx | `SYSTEM` | `RETRY`, requeue | DLQ 이동 |
-| account 타임아웃/네트워크 | `TIMEOUT` | 동일 | DLQ 이동 |
-| point_histories INSERT 실패 (account 성공 후) | `SYSTEM` | 동일 (멱등 안전) | DLQ 이동 |
+| account 5xx | `SYSTEM` | `RETRY`, requeue | ingest 큐 publish |
+| account 타임아웃/네트워크 | `TIMEOUT` | 동일 | ingest 큐 publish |
+| point_histories INSERT 실패 (account 성공 후) | `SYSTEM` | 동일 (멱등 안전) | ingest 큐 publish |
 
 **retry_count 정책:**
 
 - `message_process_logs.retry_count` — processing 처리 단위 추적
-- `failed_messages.retry_count` — DLQ 적재 시점 누적
+- `failed_messages.retry_count` — ingest 적재 시점 누적
 - `max_retry_count` 기본값 3 (`application.yml` 오버라이드 가능)
 
-### S4. DLQ 소비 → failed_messages 동기화
+### S4. ingest 큐 / DLQ → failed_messages 동기화
 
-recovery DLQ Consumer 수신 시:
+`FailedMessageIngestConsumer` 수신 시:
 
-1. payload 파싱 (`UserPointChangedEvent`)
-2. `(consumer_name, event_id)` UK 기준 upsert
-3. `dlq_stored_yn = Y`, `reprocess_status = WAITING`
-4. DLQ 메시지 ack
-
-이미 API로 적재된 건이면 `dlq_stored_yn`만 갱신 (멱등).
+1. `FailedMessageIngestEvent` 파싱
+2. `FailedMessageIngestService.ingest()` 호출
+3. `(consumer_name, event_id)` UK 기준 upsert
+4. DLQ 경유 시 `dlq_stored_yn = Y`, ingest 직행 시 `N` (또는 출처 헤더로 구분)
+5. 메시지 ack
 
 ---
 
 ## 작업 목록
 
-### 1. core-service — DLQ RabbitMQ Bean
+### 1. core-service — MQ Bean
+
+**파일:** `core-service/src/main/java/com/hopoong/core/keys/rabbitmq/RabbitMqKeys.java`
+
+| 상수 | 값 |
+|------|-----|
+| `INGEST_QUEUE` | `recovery-service.failed-messages.ingest` |
+| `DLQ` | `processing-service.user.point.changed.v2.dlq` (기존) |
 
 **파일:** `core-service/src/main/java/com/hopoong/core/config/RabbitMqConfig.java`
 
 | Bean | 설명 |
 |------|------|
-| `userPointChangedDlq()` | `processing-service.user.point.changed.v2.dlq` Queue (durable) |
-| `userPointChangedQueue()` 수정 | `x-dead-letter-exchange`, `x-dead-letter-routing-key` 추가 |
-| DLQ binding | DLQ 큐를 exchange에 binding |
+| `failedMessageIngestQueue()` | `recovery-service.failed-messages.ingest` (durable) |
+| `userPointChangedDlq()` | main DLQ (durable) |
+| `userPointChangedQueue()` 수정 | `x-dead-letter-exchange`, `x-dead-letter-routing-key` (DLX 백업) |
+| binding | ingest 큐·DLQ binding |
 
-**상수:** `RabbitMqKeys.UserPointChangedV2.DLQ` (기존)
+### 2. processing-service — `FailedMessagePublisher`
 
-### 2. processing-service — 예외 분류 보강
+**파일:** `processing-service/.../publisher/FailedMessagePublisher.java`
+
+- `RabbitTemplate.convertAndSend` → `recovery-service.failed-messages.ingest`
+- body: `FailedMessageIngestEvent`
+- **publisher confirm** 또는 send 실패 시 정책 확정 (권장: confirm 실패 시 ack 금지·로그)
+
+**금지:** `RecoveryFailedMessageClient` (HTTP) — **구현하지 않음**
+
+### 3. processing-service — 예외 분류 보강
 
 **파일:** `AccountPointApplyClient.java`
 
-- 4xx 응답 시 HTTP status code를 예외에 포함 (404 vs 기타 4xx 구분 가능)
-- 5xx / `RestClientException` → retry 대상으로 분류 가능하게 유지
+- 4xx 응답 시 HTTP status code를 예외에 포함
+- 5xx / `RestClientException` → retry 대상 예외로 분류
 
 **파일:** `UserPointChangedProcessService.java`
 
 | 변경 | 내용 |
 |------|------|
 | `RETRY` 상태 전이 | 일시 오류 시 `markRetry()` |
-| `DLQ` 상태 전이 | retry 소진 또는 복구 불가 DLQ 위임 시 |
+| `FAILED` 상태 전이 | 복구 불가·종료 실패 시 |
 | `retry_count` 증가 | 재시도마다 increment |
-| 복구 불가 catch | recovery API 호출 후 예외 **미전파** (ack) |
+| 복구 불가 catch | `FailedMessagePublisher.publish()` 후 **예외 미전파** (ack) |
 
 **파일:** `MessageProcessLog.java`
 
-- `markRetry()`, `markDlq()` 메서드 추가
-
-### 3. processing-service — `RecoveryFailedMessageClient`
-
-**파일:** `processing-service/.../client/RecoveryFailedMessageClient.java`
-
-- `POST {app.recovery.base-url}/internal/v1/failed-messages`
-- 실패 컨텍스트(eventId, queue, exchange, routingKey, payload, failureType, failureReason) 전달
-- recovery API 실패 시 로그 + 예외 정책 확정 (권장: 로그 후 ack — 무한 requeue 방지)
-
-**설정:** `processing-service/application.yml`
-
-```yaml
-app:
-  recovery:
-    base-url: http://localhost:9300
-```
+- `markRetry()`, `markFailed()` 보강
 
 ### 4. processing-service — `RabbitListenerErrorHandler`
 
@@ -119,39 +145,47 @@ app:
 | 예외 유형 | 정책 |
 |-----------|------|
 | 멱등·중복 (return 정상 종료) | ack |
-| `BUSINESS` (복구 불가) | recovery API + ack |
-| `SYSTEM` / `TIMEOUT` | retry → 초과 시 DLQ (nack, requeue=false) |
-| `UnsupportedUserPointChangedVersionException` | `BUSINESS` → recovery API + ack |
-| `IllegalArgumentException` | `BUSINESS` → recovery API + ack |
+| `BUSINESS` (복구 불가) | ingest publish + ack |
+| `SYSTEM` / `TIMEOUT` | retry → 초과 시 ingest publish + ack |
+| `UnsupportedUserPointChangedVersionException` | `BUSINESS` → ingest publish + ack |
+| `IllegalArgumentException` | `BUSINESS` → ingest publish + ack |
 
-Spring AMQP `RetryInterceptor` 또는 `SimpleRabbitListenerContainerFactory` retry 설정과 연계.
+Spring AMQP `RetryInterceptor`와 연계. retry 소진 시 `FailedMessagePublisher` 호출.
 
-### 5. recovery-service — DLQ Consumer
+### 5. recovery-service — `FailedMessageIngestConsumer`
 
-**파일:** `recovery-service/.../consumer/DlqMessageConsumer.java`
+**파일:** `recovery-service/.../consumer/FailedMessageIngestConsumer.java`
 
 ```java
-@RabbitListener(queues = RabbitMqKeys.UserPointChangedV2.DLQ)
-public void consumeDlqMessage(...) { ... }
+@RabbitListener(queues = RabbitMqKeys.FailedMessageIngest.QUEUE)
+public void consumeIngest(FailedMessageIngestEvent event) { ... }
 ```
 
 - Phase 1 `FailedMessageIngestService` 재사용
-- MQ 메타데이터(exchange, routingKey, queue)를 엔티티에 저장
 
-### 6. recovery-service — AMQP 설정
+**(선택) DLQ 백업 Consumer**
 
-- `build.gradle`: `spring-boot-starter-amqp` (Phase 1에서 미추가 시)
-- `application.yml`: RabbitMQ 연결 설정
+```java
+@RabbitListener(queues = RabbitMqKeys.UserPointChangedV2.DLQ)
+public void consumeDlq(...) { ... }  // 동일 ingest 서비스, dlq_stored_yn = Y
+```
+
+DLX만으로 종료하는 경우 백업. **권장 종료 경로는 ingest publish 단일화.**
+
+### 6. 트랜잭션 경계
+
+- `message_process_logs` FAILED/RETRY 기록과 ingest publish 순서 확정
+- 권장: DB 커밋 후 publish, 또는 `REQUIRES_NEW`로 로그 유지 후 publish
 
 ---
 
-## 연동 방식 (하이브리드)
+## 연동 방식 (MQ 단일 경로)
 
-| 실패 유형 | 1차 처리 | failed_messages 경로 |
-|-----------|----------|----------------------|
-| 복구 불가 (4xx, payload, 미지원 버전) | processing | **Internal API** 후 ack |
-| 일시 오류 (5xx, 네트워크) | processing + MQ retry | retry 소진 → **DLQ Consumer** |
-| DLQ에만 존재 | recovery | DLQ Consumer → upsert |
+| 실패 유형 | processing 동작 | failed_messages 경로 |
+|-----------|-----------------|----------------------|
+| 복구 불가 (4xx, payload, 미지원 버전) | ingest **publish** → main ack | Ingest Consumer |
+| 일시 오류 (5xx, 네트워크) | retry → 초과 시 ingest **publish** | Ingest Consumer |
+| DLX 백업 | (자동) | DLQ Consumer → 동일 ingest 서비스 |
 
 ---
 
@@ -159,11 +193,12 @@ public void consumeDlqMessage(...) { ... }
 
 | 구분 | 범위 |
 |------|------|
-| **신규** | `processing-service/.../RecoveryFailedMessageClient`, ErrorHandler config |
-| **신규** | `recovery-service/.../consumer/DlqMessageConsumer` |
-| **수정** | `core-service/RabbitMqConfig.java` |
+| **신규** | `FailedMessageIngestEvent`, `FailedMessagePublisher`, ErrorHandler config |
+| **신규** | `recovery-service/.../consumer/FailedMessageIngestConsumer` |
+| **수정** | `core-service/RabbitMqKeys`, `RabbitMqConfig` |
 | **수정** | `processing-service/UserPointChangedProcessService`, `MessageProcessLog`, `AccountPointApplyClient` |
-| **수정** | `processing-service/application.yml`, `recovery-service/application.yml` |
+| **수정** | `recovery-service/application.yml` |
+| **금지** | `RecoveryFailedMessageClient` (HTTP) |
 | **금지** | reprocess API (Phase 3) |
 
 ---
@@ -173,27 +208,27 @@ public void consumeDlqMessage(...) { ... }
 ### 기동
 
 - [ ] recovery-service + processing-service + account-service + order-service 기동
-- [ ] RabbitMQ Management UI에서 DLQ 큐·binding 확인
+- [ ] RabbitMQ Management UI에서 ingest 큐·DLQ·binding 확인
 
 ### E2E — S2 (복구 불가)
 
 1. [ ] 존재하지 않는 `userId` 이벤트 발행
-2. [ ] `failed_messages`: `failure_type = BUSINESS`, `reprocess_status = WAITING`
+2. [ ] ingest 큐 → recovery Consumer → `failed_messages`: `failure_type = BUSINESS`
 3. [ ] `message_process_logs`: `FAILED`
-4. [ ] main queue **requeue 없음** (동일 메시지 무한 반복 없음)
+4. [ ] main queue **requeue 없음**
 
-5. [ ] 미지원 `eventVersion` 이벤트 → `failed_messages` 적재 + ack
+5. [ ] 미지원 `eventVersion` → ingest 적재 + ack
 
 ### E2E — S3 (일시 오류)
 
 1. [ ] account 5xx 모킹 (또는 account 중지)
 2. [ ] `message_process_logs`: `RETRY`, `retry_count` 증가
-3. [ ] `max_retry_count` 초과 후 DLQ에 메시지 적재
-4. [ ] recovery DLQ Consumer → `failed_messages` upsert, `dlq_stored_yn = Y`
+3. [ ] `max_retry_count` 초과 후 ingest 큐 publish
+4. [ ] recovery Consumer → `failed_messages` upsert
 
 ### 멱등
 
-- [ ] `(consumer_name, event_id)` UK — API + DLQ 이중 적재 시 단일 행 유지
+- [ ] 동일 `(consumer_name, event_id)` 재publish → 단일 행 유지
 
 ### 회귀
 
@@ -207,20 +242,20 @@ public void consumeDlqMessage(...) { ... }
 
 | 조치 | 방법 |
 |------|------|
-| ErrorHandler revert | processing revert → 기존 rethrow 동작 |
-| DLQ 큐 | 개발 환경 DLQ·main queue purge |
-| recovery DLQ Consumer | `@RabbitListener` 비활성화 또는 recovery 중지 |
+| ErrorHandler·Publisher revert | processing revert → 기존 rethrow 동작 |
+| MQ | ingest·DLQ·main queue purge (개발) |
+| recovery Consumer | `@RabbitListener` 비활성화 또는 recovery 중지 |
 
 ---
 
 ## 커밋 메시지 예시
 
 ```text
-feat(processing-service): [point] 실패 분기 및 recovery failed-messages 연동
+feat(processing-service): [point] 실패 MQ publish 및 ingest 큐 연동
 
-feat(core-service): [key] UserPointChanged v2 DLQ 큐 및 dead-letter binding 추가
+feat(core-service): [key] failed-messages ingest 큐 및 DLQ binding 추가
 
-feat(recovery-service): [recovery] DLQ Consumer 및 failed-messages 동기화
+feat(recovery-service): [recovery] FailedMessage ingest Consumer 구현
 ```
 
 Phase 단위로 **3개 커밋 분리** 권장 (core / processing / recovery).
