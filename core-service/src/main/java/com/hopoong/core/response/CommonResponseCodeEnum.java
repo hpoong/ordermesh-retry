@@ -19,6 +19,9 @@ public enum CommonResponseCodeEnum {
 
     // T2: order-service
     ORDER_POINT("T2", "C01", "포인트"),
+
+    // T4: recovery-service
+    RECOVERY_FAILED_MESSAGES("T4", "C01", "실패 메시지"),
     ;
 
     private final String type;

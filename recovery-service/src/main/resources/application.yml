@@ -4,6 +4,28 @@ logging:
   level:
     root: info
 
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ordermesh-retry}
+    username: ${SPRING_DATASOURCE_USERNAME:user}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: ${SPRING_RABBITMQ_PORT:5672}
+    username: ${SPRING_RABBITMQ_USERNAME:user}
+    password: ${SPRING_RABBITMQ_PASSWORD:password}
+    virtual-host: ${SPRING_RABBITMQ_VIRTUAL_HOST:ordermesh-retry}
+
+app:
+  recovery:
+    max-retry-count: ${APP_RECOVERY_MAX_RETRY_COUNT:3}
 
 server:
   port: 9300

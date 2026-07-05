@@ -1,7 +1,11 @@
 package com.hopoong.recovery.entity;
 
+import com.hopoong.recovery.enums.FailureType;
+import com.hopoong.recovery.enums.ReprocessStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -14,7 +18,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Builder
@@ -54,10 +60,12 @@ public class FailedMessage {
     private String routingKey;
 
     @Column(nullable = false, columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String payload;
 
     @Column(name = "failure_type", nullable = false, length = 50)
-    private String failureType;
+    @Enumerated(EnumType.STRING)
+    private FailureType failureType;
 
     @Column(name = "failure_reason", nullable = false, columnDefinition = "text")
     private String failureReason;
@@ -75,7 +83,8 @@ public class FailedMessage {
     private String dlqStoredYn;
 
     @Column(name = "reprocess_status", nullable = false, length = 30)
-    private String reprocessStatus;
+    @Enumerated(EnumType.STRING)
+    private ReprocessStatus reprocessStatus;
 
     @Column(name = "reprocessed_at")
     private LocalDateTime reprocessedAt;
@@ -87,4 +96,30 @@ public class FailedMessage {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void updateFailure(
+            String failureReason,
+            Integer retryCount,
+            LocalDateTime lastFailedAt,
+            FailureType failureType,
+            String payload,
+            String dlqStoredYn
+    ) {
+        this.failureReason = failureReason;
+        this.retryCount = retryCount;
+        this.lastFailedAt = lastFailedAt;
+        this.failureType = failureType;
+        this.payload = payload;
+        this.dlqStoredYn = dlqStoredYn;
+        this.reprocessStatus = ReprocessStatus.WAITING;
+        this.reprocessedAt = null;
+    }
+
+    public void markDlqStored() {
+        this.dlqStoredYn = "Y";
+    }
+
+    public void claimForReprocess() {
+        this.reprocessStatus = ReprocessStatus.PROCESSING;
+    }
 }
