@@ -13,4 +13,13 @@ public final class RabbitMqKeys {
 
         private UserPointChangedV2() { }
     }
+
+    public static final class FailedMessageIngest {
+
+        public static final String EXCHANGE = UserPointChangedV2.EXCHANGE;
+        public static final String ROUTING_KEY = "failed-messages.ingest";
+        public static final String QUEUE = "recovery-service.failed-messages.ingest";
+
+        private FailedMessageIngest() { }
+    }
 }

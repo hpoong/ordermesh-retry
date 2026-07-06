@@ -4,6 +4,7 @@ import com.hopoong.core.keys.rabbitmq.RabbitMqKeys;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -23,7 +24,10 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue userPointChangedQueue() {
-        return new Queue(RabbitMqKeys.UserPointChangedV2.QUEUE, true);
+        return QueueBuilder.durable(RabbitMqKeys.UserPointChangedV2.QUEUE)
+                .deadLetterExchange(RabbitMqKeys.UserPointChangedV2.EXCHANGE)
+                .deadLetterRoutingKey(RabbitMqKeys.UserPointChangedV2.DLQ)
+                .build();
     }
 
     @Bean
@@ -31,6 +35,30 @@ public class RabbitMqConfig {
         return BindingBuilder.bind(userPointChangedQueue)
                 .to(userPointChangedExchange)
                 .with(RabbitMqKeys.UserPointChangedV2.ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue failedMessageIngestQueue() {
+        return QueueBuilder.durable(RabbitMqKeys.FailedMessageIngest.QUEUE).build();
+    }
+
+    @Bean
+    public Binding failedMessageIngestBinding(Queue failedMessageIngestQueue, TopicExchange userPointChangedExchange) {
+        return BindingBuilder.bind(failedMessageIngestQueue)
+                .to(userPointChangedExchange)
+                .with(RabbitMqKeys.FailedMessageIngest.ROUTING_KEY);
+    }
+
+    @Bean
+    public Queue userPointChangedDlq() {
+        return QueueBuilder.durable(RabbitMqKeys.UserPointChangedV2.DLQ).build();
+    }
+
+    @Bean
+    public Binding userPointChangedDlqBinding(Queue userPointChangedDlq, TopicExchange userPointChangedExchange) {
+        return BindingBuilder.bind(userPointChangedDlq)
+                .to(userPointChangedExchange)
+                .with(RabbitMqKeys.UserPointChangedV2.DLQ);
     }
 
     @Bean
