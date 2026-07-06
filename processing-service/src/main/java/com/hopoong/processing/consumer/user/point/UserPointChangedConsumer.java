@@ -14,7 +14,11 @@ public class UserPointChangedConsumer {
 
     private final UserPointChangedEventDispatcher userPointChangedEventDispatcher;
 
-    @RabbitListener(queues = RabbitMqKeys.UserPointChangedV2.QUEUE)
+    @RabbitListener(
+            queues = RabbitMqKeys.UserPointChangedV2.QUEUE,
+            containerFactory = "processingRabbitListenerContainerFactory",
+            errorHandler = "userPointChangedRabbitListenerErrorHandler"
+    )
     public void consumeUserPointChanged(UserPointChangedEvent message) {
         log.info(
                 "UserPointChanged 이벤트 수신. eventId={} eventVersion={} userId={}",

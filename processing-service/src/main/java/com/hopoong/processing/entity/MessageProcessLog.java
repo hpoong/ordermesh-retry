@@ -97,7 +97,22 @@ public class MessageProcessLog {
 
     public void markFailed(String errorMessage) {
         this.processStatus = MessageProcessStatus.FAILED.name();
-        this.errorMessage = errorMessage;
+        this.errorMessage = limitErrorMessage(errorMessage);
         this.processedAt = LocalDateTime.now();
+        this.ackedAt = LocalDateTime.now();
+    }
+
+    public void markRetry(String errorMessage, Integer retryCount) {
+        this.processStatus = MessageProcessStatus.RETRY.name();
+        this.errorMessage = limitErrorMessage(errorMessage);
+        this.retryCount = retryCount;
+        this.processedAt = LocalDateTime.now();
+    }
+
+    private String limitErrorMessage(String errorMessage) {
+        if (errorMessage == null || errorMessage.length() <= 255) {
+            return errorMessage;
+        }
+        return errorMessage.substring(0, 255);
     }
 }

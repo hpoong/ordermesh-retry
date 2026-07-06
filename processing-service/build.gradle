@@ -23,6 +23,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'		// web
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation 'org.springframework.retry:spring-retry'
 
 	runtimeOnly 'org.postgresql:postgresql'
 
@@ -34,5 +35,4 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
-
 

@@ -11,4 +11,6 @@ public interface MessageProcessLogRepository extends JpaRepository<MessageProces
             String consumerName,
             Collection<String> processStatuses
     );
+
+    long countByEventIdAndConsumerName(String eventId, String consumerName);
 }

@@ -5,6 +5,7 @@ import com.hopoong.processing.consumer.user.point.exception.UserPointChangedProc
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -36,19 +37,23 @@ public class AccountPointApplyClient {
                     .body(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (httpRequest, response) -> {
-                        throw new UserPointChangedProcessException(
+                        throw UserPointChangedProcessException.business(
                                 "account internal API 4xx 응답. status=" + response.getStatusCode().value()
                                         + ", userId=" + event.userId()
                         );
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (httpRequest, response) -> {
                         throw new UserPointChangedProcessException(
-                                "account internal API 5xx 응답. status=" + response.getStatusCode().value()
+                                "account internal API 5xx 응답. status=" + response.getStatusCode().value(),
+                                UserPointChangedProcessException.SYSTEM,
+                                true
                         );
                     })
                     .toBodilessEntity();
+        } catch (ResourceAccessException exception) {
+            throw UserPointChangedProcessException.timeout("account internal API 타임아웃/네트워크 오류", exception);
         } catch (RestClientException exception) {
-            throw new UserPointChangedProcessException("account internal API 호출 실패", exception);
+            throw UserPointChangedProcessException.system("account internal API 호출 실패", exception);
         }
     }
 }

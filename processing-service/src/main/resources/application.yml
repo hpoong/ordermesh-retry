@@ -21,6 +21,8 @@ logging:
 app:
   account:
     base-url: http://localhost:9000
+  processing:
+    max-retry-count: ${APP_PROCESSING_MAX_RETRY_COUNT:3}
 
 server:
   port: 9200
