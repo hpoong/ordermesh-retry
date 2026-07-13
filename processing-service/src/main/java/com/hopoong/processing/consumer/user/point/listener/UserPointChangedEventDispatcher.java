@@ -1,9 +1,9 @@
-package com.hopoong.processing.consumer.user.point;
+package com.hopoong.processing.consumer.user.point.listener;
 
-import com.hopoong.processing.consumer.user.point.exception.UnsupportedUserPointChangedVersionException;
-import com.hopoong.processing.consumer.user.point.handler.UserPointChangedEventHandler;
 import com.hopoong.core.event.UserPointChangedEvent;
 import com.hopoong.core.keys.event.EventLogTypes;
+import com.hopoong.processing.consumer.user.point.exception.UnsupportedUserPointChangedVersionException;
+import com.hopoong.processing.consumer.user.point.handler.UserPointChangedEventHandler;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;

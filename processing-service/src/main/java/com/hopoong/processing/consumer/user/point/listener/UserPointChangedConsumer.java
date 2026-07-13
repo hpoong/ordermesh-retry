@@ -1,4 +1,4 @@
-package com.hopoong.processing.consumer.user.point;
+package com.hopoong.processing.consumer.user.point.listener;
 
 import com.hopoong.core.event.UserPointChangedEvent;
 import com.hopoong.core.keys.rabbitmq.RabbitMqKeys;

@@ -65,8 +65,8 @@ public class UserPointChangedProcessService {
                 return;
             }
 
-            processLog.markProcessing();
             // [message_process_logs] PROCESSING UPDATE
+            processLog.markProcessing();
             messageProcessLogRepository.save(processLog);
 
             // [users] account internal API로 point_balance 반영
@@ -124,8 +124,9 @@ public class UserPointChangedProcessService {
                 event.eventId(),
                 event.userId()
         );
-        processLog.markDuplicate();
+
         // [message_process_logs] DUPLICATE UPDATE
+        processLog.markDuplicate();
         messageProcessLogRepository.save(processLog);
     }
 
@@ -147,8 +148,8 @@ public class UserPointChangedProcessService {
             UserPointChangedEvent event,
             UserPointChangedProcessException exception
     ) {
-        processLog.markFailed(exception.getMessage());
         // [message_process_logs] FAILED UPDATE
+        processLog.markFailed(exception.getMessage());
         messageProcessLogRepository.save(processLog);
 
         failedMessagePublisher.publish(
@@ -167,9 +168,9 @@ public class UserPointChangedProcessService {
     }
 
     private void markSuccess(MessageProcessLog processLog, UserPointChangedEvent event, LocalDateTime processedAt) {
+        // [message_process_logs] SUCCESS UPDATE
         LocalDateTime ackedAt = LocalDateTime.now();
         processLog.markSuccess(processedAt, ackedAt);
-        // [message_process_logs] SUCCESS UPDATE
         messageProcessLogRepository.save(processLog);
 
         log.info(

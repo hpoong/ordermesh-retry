@@ -22,8 +22,13 @@
 
 ## [RabbitMQ]
 
-- 큐: `processing-service.user.point.changed.v2`
-- processing-service가 단독 소비
+- main 큐: `processing-service.user.point.changed.v2`
+    - processing-service가 단독 소비
+- ingest 큐: `recovery-service.failed-messages.ingest`
+    - routing key: `failed-messages.ingest` (`user.events` exchange)
+    - processing-service `FailedMessagePublisher`가 발행, recovery-service가 소비
+- DLQ: `processing-service.user.point.changed.v2.dlq`
+    - main 큐 DLX 백업, recovery-service가 동일 ingest 서비스로 적재
 
 ---
 
@@ -37,7 +42,9 @@
 - `message_process_logs` `PROCESSING` 기록 (UPDATE)
 - account-service Internal API 호출 (`POST /internal/v1/users/point-changed`)
     - 성공 → 다음 단계 진행
-    - **호출 실패 → `message_process_logs` `FAILED`** (현재: 예외 rethrow, recovery 미연동)
+    - **호출 실패 분기**
+        - `4xx`(복구 불가) → `message_process_logs` `FAILED` 기록 후 `FailedMessagePublisher`로 ingest 큐 전달 (main ack)
+        - `5xx`/타임아웃(일시 오류) → `RETRY` 기록 + 예외 재전파, retry 소진 시 `FAILED` + ingest 큐 전달
 - `point_histories`에 포인트 처리 이력 저장 (INSERT)
     - **중복 `eventId` → `message_process_logs` `DUPLICATE` 기록 후 종료**
 - `message_process_logs` `SUCCESS` 기록 (UPDATE)
@@ -58,44 +65,21 @@
 
 ---
 
+## [recovery-service]
+
+- ingest 큐·DLQ 구독 → `failed_messages` 적재
+- `(consumer_name, event_id)` UK 기준 멱등 upsert
+- 실패 메시지 조회 Internal API (`GET /internal/v1/failed-messages`)
+- 재처리 API — 미구현
+
+> recovery-service는 실패 메시지 보관만 담당
+
+---
+
 ## 한 줄 요약
 
 ```
-order (Outbox 기록·MQ 발행)
-  → RabbitMQ
-    → processing (중복 검사·오케스트레이션·이력 저장)
-      → account (최종 잔액 반영)
+order → RabbitMQ → processing → account
+processing 실패 → ingest 큐 → recovery (failed_messages)
 ```
-
----
-
-## 현재 재시도 책임 구분
-
-| 구간 | retry 주체 | 상태 |
-|------|-----------|------|
-| MQ **발행** 실패 | **order-service** | ✅ Outbox 재시도 |
-| MQ **소비·처리** 실패 | processing-service | ❌ 미구현 ([recovery-rollout](../plan/recovery-rollout/README.md)) |
-| 최종 실패 보관·재처리 | recovery-service | ❌ 미구현 |
-
----
-
-## recovery-rollout 이후 (타겟)
-
-processing 소비 실패는 **HTTP 없이 MQ ingest 큐**로 recovery에 전달된다.
-
-```
-processing 실패
-  → FailedMessagePublisher → recovery-service.failed-messages.ingest
-    → FailedMessageIngestConsumer → failed_messages
-      → (운영) reprocess API → main queue 재발행
-```
-
-| 실패 유형 | processing 동작 | recovery |
-|-----------|-----------------|----------|
-| account 4xx, payload 오류, 미지원 버전 | ingest publish → main **ack** (retry 없음) | `failure_type = BUSINESS` |
-| account 5xx, 네트워크, DB 일시 오류 | main **retry** → 초과 시 ingest publish | `failure_type = SYSTEM` / `TIMEOUT` |
-| DLX 백업 | (자동) | DLQ Consumer → 동일 ingest 서비스 |
-
-상세: [recovery-rollout Phase 2](../plan/recovery-rollout/phase-02-dlq-and-processing-failure-handling.md)
-
 
