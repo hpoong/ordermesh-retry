@@ -1,6 +1,6 @@
 package com.hopoong.order.scheduler;
 
-import com.hopoong.order.publisher.EventLogPublishService;
+import com.hopoong.order.service.EventLogPublishService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

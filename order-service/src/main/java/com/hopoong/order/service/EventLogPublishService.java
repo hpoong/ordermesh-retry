@@ -1,10 +1,12 @@
-package com.hopoong.order.publisher;
+package com.hopoong.order.service;
 
 import com.hopoong.order.config.properties.EventOutboxPublishProperties;
 import com.hopoong.order.entity.EventLog;
 import com.hopoong.order.enums.EventPublishStatus;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import com.hopoong.order.publisher.UserPointChangedEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

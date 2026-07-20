@@ -1,4 +1,4 @@
-package com.hopoong.order.publisher;
+package com.hopoong.order.service;
 
 import com.hopoong.order.entity.EventLog;
 import com.hopoong.order.enums.EventPublishStatus;
