@@ -4,8 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hopoong.core.response.CommonResponseCodeEnum;
 import com.hopoong.core.response.SuccessResponse;
 import com.hopoong.recovery.api.internal.dto.FailedMessageCreateRequest;
+import com.hopoong.recovery.api.internal.dto.FailedMessageReprocessRequest;
 import com.hopoong.recovery.api.internal.dto.FailedMessageSearchQuery;
 import com.hopoong.recovery.api.internal.service.FailedMessageInternalService;
+import com.hopoong.recovery.reprocess.FailedMessageReprocessService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +26,7 @@ public class FailedMessageInternalController {
     private static final CommonResponseCodeEnum RESPONSE_CODE = CommonResponseCodeEnum.RECOVERY_FAILED_MESSAGES;
 
     private final FailedMessageInternalService failedMessageInternalService;
+    private final FailedMessageReprocessService failedMessageReprocessService;
     private final ObjectMapper objectMapper;
 
     // [실패 메시지 수동 적재 — E2E·운영용, (consumer_name, event_id) UK 멱등 upsert]
@@ -49,5 +52,17 @@ public class FailedMessageInternalController {
     @GetMapping("/{id}")
     public SuccessResponse getFailedMessage(@PathVariable Long id) {
         return new SuccessResponse(RESPONSE_CODE, failedMessageInternalService.getFailedMessage(id));
+    }
+
+    // [실패 메시지 단건 재처리 — 원본 exchange/routing_key로 재발행]
+    @PostMapping("/{id}/reprocess")
+    public SuccessResponse reprocessFailedMessage(@PathVariable Long id) {
+        return new SuccessResponse(RESPONSE_CODE, failedMessageReprocessService.reprocess(id));
+    }
+
+    // [실패 메시지 일괄 재처리 — 운영·E2E 편의용]
+    @PostMapping("/reprocess")
+    public SuccessResponse reprocessFailedMessages(@Valid @RequestBody FailedMessageReprocessRequest request) {
+        return new SuccessResponse(RESPONSE_CODE, failedMessageReprocessService.reprocessAll(request.ids()));
     }
 }

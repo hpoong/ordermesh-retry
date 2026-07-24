@@ -120,6 +120,20 @@ public class FailedMessage {
     }
 
     public void claimForReprocess() {
+        if (this.reprocessStatus != ReprocessStatus.WAITING) {
+            throw new IllegalStateException("재처리 대기 상태가 아닙니다.");
+        }
         this.reprocessStatus = ReprocessStatus.PROCESSING;
+    }
+
+    public void markReprocessSuccess(LocalDateTime reprocessedAt) {
+        this.reprocessStatus = ReprocessStatus.SUCCESS;
+        this.reprocessedAt = reprocessedAt;
+    }
+
+    public void markReprocessFailed(String failureReason, LocalDateTime lastFailedAt) {
+        this.reprocessStatus = ReprocessStatus.FAILED;
+        this.failureReason = failureReason;
+        this.lastFailedAt = lastFailedAt;
     }
 }

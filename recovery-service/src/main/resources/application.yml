@@ -26,6 +26,11 @@ spring:
 app:
   recovery:
     max-retry-count: ${APP_RECOVERY_MAX_RETRY_COUNT:3}
+    reprocess:
+      enabled: ${APP_RECOVERY_REPROCESS_ENABLED:false}
+      fixed-delay-ms: ${APP_RECOVERY_REPROCESS_FIXED_DELAY_MS:60000}
+      min-wait-minutes: ${APP_RECOVERY_REPROCESS_MIN_WAIT_MINUTES:10}
+      batch-size: ${APP_RECOVERY_REPROCESS_BATCH_SIZE:20}
 
 server:
   port: 9300
