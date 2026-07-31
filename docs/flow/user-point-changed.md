@@ -67,12 +67,20 @@
 
 ## [recovery-service]
 
+> recovery-rollout Phase 1~3 반영 이후 기준
+
 - ingest 큐·DLQ 구독 → `failed_messages` 적재
 - `(consumer_name, event_id)` UK 기준 멱등 upsert
 - 실패 메시지 조회 Internal API (`GET /internal/v1/failed-messages`)
-- 재처리 API — 미구현
+- 수동 적재 API (`POST /internal/v1/failed-messages`) — E2E·운영용
+- 재처리 API
+    - 단건: `POST /internal/v1/failed-messages/{id}/reprocess`
+    - 일괄: `POST /internal/v1/failed-messages/reprocess`
+    - 원본 `exchange_name` / `routing_key`로 main 큐 재발행
+- (선택) `SYSTEM`/`TIMEOUT` 자동 reprocess Scheduler — 기본 비활성
 
-> recovery-service는 실패 메시지 보관만 담당
+> processing → recovery **HTTP 호출 없음** (MQ ingest 단일 경로)  
+> 상세: [recovery-service.md](../services/recovery-service.md)
 
 ---
 
@@ -80,6 +88,6 @@
 
 ```
 order → RabbitMQ → processing → account
-processing 실패 → ingest 큐 → recovery (failed_messages)
+processing 실패 → ingest 큐 → recovery (failed_messages) → reprocess → main 큐
 ```
 

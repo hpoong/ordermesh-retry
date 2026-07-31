@@ -1,7 +1,7 @@
 # Phase 4: 문서·E2E 검증·체크리스트 완료
 
 > **선행:** [Phase 1](phase-01-recovery-bootstrap-and-ingest-api.md) ~ [Phase 3](phase-03-reprocess.md) 완료  
-> **기준:** [v2_plan.md](../v2_plan.md) 섹션 8, 13 (체크리스트 11번)
+> **기준:** [recovery-rollout README](README.md), [v2-migration](../v2-migration/README.md)
 
 ---
 
@@ -9,7 +9,8 @@
 
 recovery-service 프로세스 문서를 작성하고, 기존 docs를 MQ 단일 경로 구현과 동기화한다.
 
-전 Phase E2E 시나리오를 통합 검증하고, v2_plan 체크리스트 11번을 완료 처리한다.
+전 Phase E2E 시나리오를 통합 검증하고, recovery 연동 체크리스트를 완료 처리한다.
+(`docs/plan/v2_plan.md`는 삭제됨 — 체크리스트는 [README 현재 상태](README.md)로 이관)
 
 ---
 
@@ -69,12 +70,13 @@ recovery-service MQ 연동 흐름 문단 추가. **HTTP recovery 호출 없음**
 - `failed_messages` 소유 서비스: recovery-service
 - `failure_type`, `reprocess_status` 값 예시 갱신
 
-### 6. `docs/plan/v2_plan.md` 체크리스트
+### 6. recovery 연동 체크리스트
 
-섹션 12 체크리스트 11번 완료:
+`docs/plan/v2_plan.md`는 삭제되었으므로, [recovery-rollout README](README.md) **현재 상태**에 완료 표기한다.
 
 ```text
-11. [x] recovery-service: failed_messages 연동 (MQ ingest)
+[x] recovery-service: failed_messages 연동 (MQ ingest)
+[x] docs/services/recovery-service.md 작성
 ```
 
 ### 7. `docs/plan/v2-migration/README.md` 확인
@@ -125,8 +127,10 @@ recovery-rollout 링크 및 설명이 MQ 단일 경로와 일치하는지 확인
 - [ ] reprocess API로 재발행 시 processing이 정상 처리한다
 - [ ] `(consumer_name, event_id)` UK로 중복 적재가 방지된다
 - [ ] order-service Outbox 재시도 흐름은 기존과 동일하게 동작한다 (회귀 없음)
-- [ ] `docs/services/recovery-service.md` 작성 완료
-- [ ] v2_plan 체크리스트 11번 완료
+- [x] `docs/services/recovery-service.md` 작성 완료
+- [x] recovery 연동 체크리스트 완료 (README 현재 상태)
+
+> 위 E2E 항목(미체크)은 로컬 통합 검증 시 수행한다. 문서 동기화 범위에서는 코드상 HTTP recovery 호출이 없음을 확인했다.
 
 ---
 
@@ -137,7 +141,7 @@ recovery-rollout 링크 및 설명이 MQ 단일 경로와 일치하는지 확인
 | **신규** | `docs/services/recovery-service.md` |
 | **수정** | `docs/services/processing-service.md`, `docs/services/core-service.md` |
 | **수정** | `docs/flow/user-point-changed.md` |
-| **수정** | `docs/plan/v2_plan.md` |
+| **수정** | `docs/plan/recovery-rollout/README.md` (체크리스트·현재 상태) |
 | **확인** | `docs/db/tables.md`, `docs/plan/v2-migration/README.md` |
 | **코드 변경 없음** | — |
 
