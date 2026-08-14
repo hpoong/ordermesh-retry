@@ -1,0 +1,60 @@
+def flywayUrl = System.getenv('FLYWAY_URL') ?: 'jdbc:postgresql://localhost:5432/ordermesh-retry'
+def flywayUser = System.getenv('FLYWAY_USER') ?: 'user'
+def flywayPassword = System.getenv('FLYWAY_PASSWORD') ?: 'password'
+def flywayLocations = ["filesystem:${project.projectDir}/src/main/resources/db/migration"]
+
+flyway {
+	url = flywayUrl
+	user = flywayUser
+	password = flywayPassword
+	locations = flywayLocations
+	schemas = ['public']
+	defaultSchema = 'public'
+	baselineVersion = '0'
+}
+
+tasks.register('flywayMigrateAll') {
+	group = 'Flyway'
+	description = 'Apply migrations to every non-system schema in the target database'
+
+	doLast {
+		Class.forName('org.postgresql.Driver')
+
+		def targetSchemas = []
+		def connection = java.sql.DriverManager.getConnection(flywayUrl, flywayUser, flywayPassword)
+		try {
+			def statement = connection.createStatement()
+			def resultSet = statement.executeQuery('''
+				SELECT schema_name
+				FROM information_schema.schemata
+				WHERE schema_name NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+				  AND schema_name NOT LIKE 'pg_temp%'
+				  AND schema_name NOT LIKE 'pg_toast_temp%'
+				ORDER BY schema_name
+			''')
+			while (resultSet.next()) {
+				targetSchemas << resultSet.getString('schema_name')
+			}
+		} finally {
+			connection.close()
+		}
+
+		if (targetSchemas.isEmpty()) {
+			throw new GradleException("No schemas found to migrate: ${flywayUrl}")
+		}
+
+		targetSchemas.each { schemaName ->
+			logger.lifecycle("Flyway migrate schema=${schemaName}")
+			org.flywaydb.core.Flyway.configure()
+					.dataSource(flywayUrl, flywayUser, flywayPassword)
+					.locations(flywayLocations as String[])
+					.schemas(schemaName)
+					.defaultSchema(schemaName)
+					.createSchemas(true)
+					.baselineOnMigrate(true)
+					.baselineVersion('0')
+					.load()
+					.migrate()
+		}
+	}
+}
