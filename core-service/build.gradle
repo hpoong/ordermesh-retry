@@ -48,12 +48,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-flyway {
-	url = System.getenv('FLYWAY_URL') ?: 'jdbc:postgresql://localhost:5432/ordermesh-retry'
-	user = System.getenv('FLYWAY_USER') ?: 'user'
-	password = System.getenv('FLYWAY_PASSWORD') ?: 'password'
-	locations = ['classpath:db/migration']
-}
+apply from: 'gradle/flyway.gradle'
 
 tasks.named('test') {
 	useJUnitPlatform()
