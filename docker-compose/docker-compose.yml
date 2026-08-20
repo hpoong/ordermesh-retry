@@ -1,4 +1,31 @@
 services:
+
+  loki:
+    image: grafana/loki:3.7.4
+    command: -config.file=/etc/loki/config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    networks:
+      - ordermesh-retry-network
+
+  fluent-bit:
+    image: fluent/fluent-bit:5.1.0
+    depends_on:
+      - loki
+    ports:
+      - "2020:2020"
+    volumes:
+      # 기본값은 이 Compose 파일 기준 ../logs이며, LOG_DIR로 변경할 수 있습니다.
+      - ${LOG_DIR:-../logs}:/Users/ho_poong/log/ordermesh-retry:ro
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - fluent-bit-state:/fluent-bit/state
+    networks:
+      - ordermesh-retry-network
+
   rabbitmq-service:
     image: rabbitmq:3.13.0-management
     ports:
@@ -40,3 +67,7 @@ services:
 networks:
   ordermesh-retry-network:
     driver: bridge
+
+volumes:
+  loki-data:
+  fluent-bit-state:
