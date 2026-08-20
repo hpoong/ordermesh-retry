@@ -40,6 +40,8 @@
         </encoder>
     </appender>
 
+    
+
     <!-- 일반 파일 로그 -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR_BASE}/${APP_NAME}.log</file>
@@ -53,14 +55,10 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 일 단위 롤링 -->
             <fileNamePattern>${LOG_DIR_BASE}/${APP_NAME}-%d{yyyyMMdd}.log</fileNamePattern>
-
-            <!-- 3일 보관 -->
-            <maxHistory>3</maxHistory>
-
-            <!-- 애플리케이션 시작 시 오래된 로그 정리 -->
-            <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
     </appender>
+
+
 
     <!-- ERROR 전용 파일 로그 -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
@@ -80,12 +78,6 @@
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!-- 일 단위 롤링 -->
             <fileNamePattern>${LOG_DIR_BASE}/${APP_NAME}-error-%d{yyyyMMdd}.log</fileNamePattern>
-
-            <!-- 30일 보관 -->
-            <maxHistory>30</maxHistory>
-
-            <!-- 애플리케이션 시작 시 오래된 로그 정리 -->
-            <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>
     </appender>
 
