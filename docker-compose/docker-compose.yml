@@ -7,7 +7,7 @@ services:
       - "3100:3100"
     volumes:
       - ./loki/config.yml:/etc/loki/config.yml:ro
-      - loki-data:/loki
+      - rdermesh-retry-loki-volumes:/loki
     networks:
       - ordermesh-retry-network
 
@@ -18,11 +18,10 @@ services:
     ports:
       - "2020:2020"
     volumes:
-      # 기본값은 이 Compose 파일 기준 ../logs이며, LOG_DIR로 변경할 수 있습니다.
-      - ${LOG_DIR:-../logs}:/Users/ho_poong/log/ordermesh-retry:ro
+      - ./logs:/var/log/ordermesh-retry:ro
       - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
-      - fluent-bit-state:/fluent-bit/state
+      - rdermesh-retry-fluent-bit-volumes:/fluent-bit/state
     networks:
       - ordermesh-retry-network
 
@@ -69,5 +68,5 @@ networks:
     driver: bridge
 
 volumes:
-  loki-data:
-  fluent-bit-state:
+  rdermesh-retry-loki-volumes:
+  rdermesh-retry-fluent-bit-volumes:

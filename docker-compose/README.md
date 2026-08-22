@@ -18,8 +18,8 @@ Loki 준비 상태는 `http://localhost:3100/ready`에서 확인합니다. Fluen
 
 ## Labels
 
-`job`은 공통 수집 라벨이고, `service`는 로그 경로 `/Users/ho_poong/log/ordermesh-retry/<service>/...`에서 자동 추출됩니다.
+`job`은 공통 수집 라벨이고, `service`는 로그 경로 `/var/log/ordermesh-retry/<service>/...`에서 자동 추출됩니다.
 
-새 서비스는 `/Users/ho_poong/log/ordermesh-retry/<service>/` 아래에 로그만 남기면 Fluent Bit conf 수정 없이 수집됩니다.
+새 서비스는 `/var/log/ordermesh-retry/<service>/` 아래에 로그만 남기면 Fluent Bit conf 수정 없이 수집됩니다.
 
-현재 `account-service`와 `order-service`는 `dev` 또는 `prod` 프로필에서 `/Users/ho_poong/log/ordermesh-retry/<service>`에 로그를 기록합니다. 이 경로를 그대로 사용할 경우 `LOG_DIR=/Users/ho_poong/log/ordermesh-retry`로 설정하세요. 로컬 개발용 `logs/` 경로에 기록하도록 Logback 설정을 조정하는 작업은 별도로 필요합니다.
+현재 `account-service`와 `order-service`는 `dev` 또는 `prod` 프로필에서 `/var/log/ordermesh-retry/<service>`에 로그를 기록합니다. 이 경로를 그대로 사용할 경우 `LOG_DIR=/var/log/ordermesh-retry`로 설정하세요. 로컬 개발용 `logs/` 경로에 기록하도록 Logback 설정을 조정하는 작업은 별도로 필요합니다.
