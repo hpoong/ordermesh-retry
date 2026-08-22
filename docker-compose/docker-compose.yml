@@ -21,6 +21,7 @@ services:
       - ./logs:/var/log/ordermesh-retry:ro
       - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./fluent-bit/jobs:/fluent-bit/etc/jobs:ro # project 별 job 라벨 분리
       - rdermesh-retry-fluent-bit-volumes:/fluent-bit/state
     networks:
       - ordermesh-retry-network
