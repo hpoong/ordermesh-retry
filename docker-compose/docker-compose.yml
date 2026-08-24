@@ -18,7 +18,7 @@ services:
     ports:
       - "2020:2020"
     volumes:
-      - ./logs:/var/log/ordermesh-retry:ro
+      - /var/log/ordermesh-retry:/var/log/ordermesh-retry:ro
       - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
       - ./fluent-bit/jobs:/fluent-bit/etc/jobs:ro # project 별 job 라벨 분리
