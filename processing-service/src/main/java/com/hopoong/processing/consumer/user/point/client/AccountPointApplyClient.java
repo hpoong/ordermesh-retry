@@ -14,8 +14,11 @@ public class AccountPointApplyClient {
 
     private final RestClient restClient;
 
-    public AccountPointApplyClient(@Value("${app.account.base-url}") String baseUrl) {
-        this.restClient = RestClient.builder()
+    public AccountPointApplyClient(
+            @Value("${app.account.base-url}") String baseUrl,
+            RestClient.Builder restClientBuilder
+    ) {
+        this.restClient = restClientBuilder.clone()
                 .baseUrl(baseUrl)
                 .build();
     }

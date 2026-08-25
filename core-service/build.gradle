@@ -46,6 +46,11 @@ dependencies {
 	// sql logging
 	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0'
 
+	// tracing (OTLP -> Tempo)
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+	implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

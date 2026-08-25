@@ -5,6 +5,8 @@ logging:
     root: info
 
 spring:
+  application:
+    name: recovery-service
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/ordermesh-retry}
     username: ${SPRING_DATASOURCE_USERNAME:user}

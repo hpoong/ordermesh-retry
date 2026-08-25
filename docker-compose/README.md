@@ -10,12 +10,26 @@ application file logs -> Fluent Bit -> Loki
 
 ## Tracing (Tempo)
 
-앱 계측 전 단계로 Tempo만 기동합니다. Grafana 연동과 Spring Boot span 전송은 이후 작업입니다.
+앱이 OTLP HTTP로 Tempo에 span을 보냅니다. Grafana datasource 연동은 이후 작업입니다.
 
 ```text
-(앱 OTLP) -> Tempo :4317(gRPC) / :4318(HTTP)
+order-service (HTTP + Outbox 발행)
+  -> RabbitMQ
+processing-service (consume)
+  -> account-service (HTTP)
+  -> 실패 시 recovery-service (ingest)
+```
+
+```text
+앱 (Micrometer Tracing / OTel) -> Tempo :4318/v1/traces
 Tempo API -> :3200
 ```
+
+로컬 기본값:
+
+- `management.otlp.tracing.endpoint=http://localhost:4318/v1/traces`
+- sampling `1.0` (개발용 전량 수집)
+- 환경변수 `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`로 덮어쓸 수 있음
 
 ## Run
 

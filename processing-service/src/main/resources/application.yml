@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: processing-service
   rabbitmq:
     host: localhost
     port: 5672

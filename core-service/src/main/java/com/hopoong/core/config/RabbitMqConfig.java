@@ -1,6 +1,7 @@
 package com.hopoong.core.config;
 
 import com.hopoong.core.keys.rabbitmq.RabbitMqKeys;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -11,6 +12,7 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -67,18 +69,29 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter rabbitMessageConverter) {
+    public RabbitTemplate rabbitTemplate(
+            ConnectionFactory connectionFactory,
+            MessageConverter rabbitMessageConverter,
+            ObjectProvider<ObservationRegistry> observationRegistry
+    ) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(rabbitMessageConverter);
+        rabbitTemplate.setObservationEnabled(true);
+        observationRegistry.ifAvailable(rabbitTemplate::setObservationRegistry);
         return rabbitTemplate;
     }
 
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory, MessageConverter rabbitMessageConverter) {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory,
+            MessageConverter rabbitMessageConverter,
+            ObjectProvider<ObservationRegistry> observationRegistry
+    ) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(rabbitMessageConverter);
-
+        factory.setObservationEnabled(true);
+        observationRegistry.ifAvailable(factory::setObservationRegistry);
         return factory;
     }
 }

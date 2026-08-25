@@ -10,10 +10,10 @@
 
     <!-- 로그 패턴 -->
     <property name="LOG_PATTERN"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{request_id:-startup}] [%thread] %-5level %logger - %msg%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%X{request_id:-startup}] [%X{traceId:-}] [%X{spanId:-}] [%thread] %-5level %logger - %msg%n"/>
 
     <property name="CONSOLE_LOG_PATTERN"
-              value="%red(%d{yyyy-MM-dd HH:mm:ss.SSS}) [%X{request_id:-startup}] [%thread] %clr(%5level) %cyan(%logger) - %msg%n"/>
+              value="%red(%d{yyyy-MM-dd HH:mm:ss.SSS}) [%X{request_id:-startup}] [%X{traceId:-}] [%X{spanId:-}] [%thread] %clr(%5level) %cyan(%logger) - %msg%n"/>
 
 
 
