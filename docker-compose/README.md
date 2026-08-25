@@ -1,4 +1,6 @@
-# Local Loki logging
+# Local Observability (Loki / Tempo)
+
+## Logging
 
 IntelliJ에서 실행한 애플리케이션이 파일 로그를 남기면 Fluent Bit이 이를 읽어 Loki로 전송합니다.
 
@@ -6,13 +8,41 @@ IntelliJ에서 실행한 애플리케이션이 파일 로그를 남기면 Fluent
 application file logs -> Fluent Bit -> Loki
 ```
 
+## Tracing (Tempo)
+
+앱 계측 전 단계로 Tempo만 기동합니다. Grafana 연동과 Spring Boot span 전송은 이후 작업입니다.
+
+```text
+(앱 OTLP) -> Tempo :4317(gRPC) / :4318(HTTP)
+Tempo API -> :3200
+```
+
 ## Run
 
 ```bash
+# 로그 수집
 docker compose -f docker-compose/docker-compose.yml up -d loki fluent-bit
+
+# 트레이스 저장소
+docker compose -f docker-compose/docker-compose.yml up -d tempo
 ```
 
-Loki 준비 상태는 `http://localhost:3100/ready`에서 확인합니다. Fluent Bit 메트릭은 `http://localhost:2020/api/v1/metrics`에서 확인합니다.
+준비 상태 확인:
+
+- Loki: `http://localhost:3100/ready`
+- Tempo: `http://localhost:3200/ready`
+- Fluent Bit 메트릭: `http://localhost:2020/api/v1/metrics`
+
+## Tempo ports
+
+| Port | 용도 |
+|------|------|
+| 3200 | Tempo HTTP API (`/ready`, 조회) |
+| 4317 | OTLP gRPC (앱 계측 시 사용) |
+| 4318 | OTLP HTTP (앱 계측 시 사용) |
+
+설정 파일: `tempo/config.yml`  
+트레이스 보관: 로컬 볼륨 `rdermesh-retry-tempo-volumes` (기본 retention 168h)
 
 ## Config layout
 

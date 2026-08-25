@@ -11,6 +11,19 @@ services:
     networks:
       - ordermesh-retry-network
 
+  tempo:
+    image: grafana/tempo:2.7.1
+    command: [ "-config.file=/etc/tempo/config.yml" ]
+    ports:
+      - "3200:3200"   # Tempo HTTP API
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./tempo/config.yml:/etc/tempo/config.yml:ro
+      - rdermesh-retry-tempo-volumes:/var/tempo
+    networks:
+      - ordermesh-retry-network
+
   fluent-bit:
     image: fluent/fluent-bit:5.1.0
     depends_on:
@@ -70,4 +83,5 @@ networks:
 
 volumes:
   rdermesh-retry-loki-volumes:
+  rdermesh-retry-tempo-volumes:
   rdermesh-retry-fluent-bit-volumes:
