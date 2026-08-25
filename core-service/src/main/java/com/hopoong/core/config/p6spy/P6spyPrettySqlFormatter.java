@@ -1,4 +1,4 @@
-package com.hopoong.order.config.p6spy;
+package com.hopoong.core.config.p6spy;
 
 import com.p6spy.engine.spy.appender.MessageFormattingStrategy;
 import org.hibernate.engine.jdbc.internal.FormatStyle;
