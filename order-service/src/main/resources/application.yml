@@ -23,6 +23,8 @@ logging:
     root: info
 
 app:
+  slow-query:
+    threshold-ms: 1000
   event-outbox:
     publish:
       enabled: true

@@ -60,6 +60,23 @@
 
 
 
+    <!-- 슬로우 쿼리 전용 파일 로그 -->
+    <appender name="SLOW_SQL_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR_BASE}/${APP_NAME}-slow-sql.log</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR_BASE}/${APP_NAME}-slow-sql-%d{yyyyMMdd}.log</fileNamePattern>
+        </rollingPolicy>
+    </appender>
+
+
+
     <!-- ERROR 전용 파일 로그 -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR_BASE}/${APP_NAME}-error.log</file>
@@ -88,6 +105,10 @@
 
     <!-- local 환경 -->
     <springProfile name="!dev &amp; !prod">
+        <logger name="slow.sql" level="WARN" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
@@ -96,6 +117,11 @@
 
     <!-- dev, prod 환경 -->
     <springProfile name="dev | prod">
+        <logger name="slow.sql" level="WARN" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="SLOW_SQL_FILE"/>
+        </logger>
+
         <root level="${APP_LOG_LEVEL}">
             <appender-ref ref="CONSOLE"/>
             <appender-ref ref="FILE"/>

@@ -27,6 +27,9 @@ dependencies {
 
 	runtimeOnly 'org.postgresql:postgresql'
 
+	// sql logging (order 전용 spy.properties)
+	implementation 'com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0'
+
 	// test
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

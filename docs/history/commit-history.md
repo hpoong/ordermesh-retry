@@ -1,5 +1,5 @@
 # 기능 커밋 이력 관리
 
-| 모듈 | feature-ID | 내용 |
-|---|---|---|
-| core-service | settings/e3f1c5d137 | core 일반 설정 변경 |
+| 모듈           | feature-ID            | 내용                |
+|--------------|-----------------------|-------------------|
+| -            | slow-query/d085bceb07 | slow query log 설정 |
