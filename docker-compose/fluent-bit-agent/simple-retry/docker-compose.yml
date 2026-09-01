@@ -1,0 +1,18 @@
+services:
+
+  fluent-bit:
+    image: fluent/fluent-bit:5.1.0
+    container_name: simple-retry-fluent-bit
+    restart: unless-stopped
+    ports:
+      - "2020:2020"
+    volumes:
+      # 로그 디렉터리 경로 수정
+      - /var/log/simple-retry:/var/log/simple-retry:ro
+      - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./fluent-bit/jobs:/fluent-bit/etc/jobs:ro
+      - simple-retry-fluent-bit-state:/fluent-bit/state
+
+volumes:
+  simple-retry-fluent-bit-state:
