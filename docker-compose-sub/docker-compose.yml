@@ -17,6 +17,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./fluent-bit/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
       - ./fluent-bit/parsers.conf:/fluent-bit/etc/parsers.conf:ro
+      - ./fluent-bit/docker-metadata.lua:/fluent-bit/etc/docker-metadata.lua:ro
       - ./fluent-bit/jobs:/fluent-bit/etc/jobs:ro
       - simple-retry-fluent-bit-state:/fluent-bit/state
 
